@@ -1,0 +1,21 @@
+{
+  "name": "k8s-manager",
+  "version": "1.0.0",
+  "description": "Proyecto de prueba para @kubernetes/client-node",
+  "main": "index.js",
+  "type": "commonjs",
+  "private": true,
+  "scripts": {
+    "start": "node index.js",
+    "dev": "concurrently -n server,web -c blue,green \"npm --prefix server run dev\" \"npm --prefix web run dev\"",
+    "dev:server": "npm --prefix server run dev",
+    "dev:web": "npm --prefix web run dev"
+  },
+  "devDependencies": {
+    "concurrently": "^9.0.1"
+  },
+  "dependencies": {
+    "@kubernetes/client-node": "^2.0.0"
+  },
+  "license": "ISC"
+}
