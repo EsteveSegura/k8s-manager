@@ -3,7 +3,7 @@ import { ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { useIntervalFn } from '@vueuse/core'
 import { useClusterStore } from '@/stores/cluster'
-import { AUTO_REFRESH_INTERVAL_MS } from '@/lib/constants'
+import { useSettingsStore } from '@/stores/settings'
 import { useLogScroll } from '@/composables/useLogScroll'
 import { useLogSearch } from '@/composables/useLogSearch'
 import { Button } from '@/components/ui/button'
@@ -23,6 +23,7 @@ const props = defineProps<{
 
 const route = useRoute()
 const store = useClusterStore()
+const settings = useSettingsStore()
 const selectedContainer = ref(props.containers[0] || '')
 const logs = ref('')
 const status = ref<'idle' | 'loading' | 'ready' | 'error'>('idle')
@@ -96,12 +97,12 @@ const { pause: pauseAutoRefresh, resume: resumeAutoRefresh } = useIntervalFn(
   () => {
     if (props.active && isAtBottom.value) fetchLogs()
   },
-  AUTO_REFRESH_INTERVAL_MS,
+  () => settings.refreshIntervalMs,
   { immediate: false },
 )
 
 watch(
-  [() => store.autoRefresh, () => props.active],
+  [() => settings.autoRefresh, () => props.active],
   ([enabled, active]) => {
     if (enabled && active) resumeAutoRefresh()
     else pauseAutoRefresh()
@@ -129,7 +130,7 @@ watch(
         {{ $t('common.refresh') }}
       </Button>
 
-      <span v-if="store.autoRefresh" class="text-xs text-muted-foreground">{{ $t('common.autoRefreshActive') }}</span>
+      <span v-if="settings.autoRefresh" class="text-xs text-muted-foreground">{{ $t('common.autoRefreshActive') }}</span>
 
       <div class="ml-auto flex items-center gap-2">
         <InputGroup class="max-w-64">

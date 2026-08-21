@@ -12,13 +12,14 @@ import { Badge } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Empty, EmptyHeader, EmptyTitle, EmptyDescription, EmptyMedia } from '@/components/ui/empty'
 import { ScrollArea } from '@/components/ui/scroll-area'
-import { ServerIcon } from '@lucide/vue'
-import ThemeToggle from '@/components/ThemeToggle.vue'
-import LocaleToggle from '@/components/LocaleToggle.vue'
+import { Button } from '@/components/ui/button'
+import { ServerIcon, SettingsIcon } from '@lucide/vue'
+import { useSettingsDialog } from '@/composables/useSettingsDialog'
 import type { K8sContext } from '@/stores/cluster'
 
 const store = useClusterStore()
 const router = useRouter()
+const settingsDialog = useSettingsDialog()
 const hoveredContext = ref<K8sContext | null>(null)
 
 onMounted(() => {
@@ -38,10 +39,9 @@ function selectContext(context: K8sContext) {
           <h1 class="text-2xl font-semibold">k8s-manager</h1>
           <p class="text-muted-foreground text-sm">{{ $t('selectContext.subtitle') }}</p>
         </div>
-        <div class="flex items-center gap-1">
-          <LocaleToggle />
-          <ThemeToggle />
-        </div>
+        <Button variant="ghost" size="icon-sm" :aria-label="$t('common.settings')" @click="settingsDialog.open()">
+          <SettingsIcon />
+        </Button>
       </div>
 
       <ResizablePanelGroup direction="horizontal" class="min-h-[24rem] rounded-lg border">

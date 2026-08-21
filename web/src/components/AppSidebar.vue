@@ -13,15 +13,16 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  SidebarTrigger,
 } from '@/components/ui/sidebar'
 import { Badge } from '@/components/ui/badge'
-import ThemeToggle from '@/components/ThemeToggle.vue'
-import LocaleToggle from '@/components/LocaleToggle.vue'
-import { BoxesIcon, NetworkIcon, ContainerIcon, ArrowLeftIcon } from '@lucide/vue'
+import { useSettingsDialog } from '@/composables/useSettingsDialog'
+import { BoxesIcon, NetworkIcon, ContainerIcon, SettingsIcon } from '@lucide/vue'
 
 const store = useClusterStore()
 const route = useRoute()
 const router = useRouter()
+const settingsDialog = useSettingsDialog()
 
 const context = computed(() => String(route.params.context || ''))
 
@@ -38,11 +39,6 @@ function countFor(kind: 'deployments' | 'services' | 'pods') {
 function goTo(kind: string) {
   router.push(`/${context.value}/${kind}`)
 }
-
-function changeCluster() {
-  store.resetForNewContext()
-  router.push('/')
-}
 </script>
 
 <template>
@@ -53,11 +49,7 @@ function changeCluster() {
           <span class="text-xs text-muted-foreground">{{ $t('common.cluster') }}</span>
           <span class="truncate text-sm font-medium">{{ context }}</span>
         </div>
-        <SidebarMenuButton as-child class="w-auto shrink-0" :tooltip="$t('common.changeCluster')" @click="changeCluster">
-          <button type="button">
-            <ArrowLeftIcon />
-          </button>
-        </SidebarMenuButton>
+        <SidebarTrigger class="shrink-0" />
       </div>
     </SidebarHeader>
 
@@ -85,13 +77,14 @@ function changeCluster() {
     </SidebarContent>
 
     <SidebarFooter>
-      <div class="flex items-center justify-between px-2 py-1.5 group-data-[collapsible=icon]:flex-col group-data-[collapsible=icon]:justify-center">
-        <span class="text-xs text-muted-foreground group-data-[collapsible=icon]:hidden">{{ $t('common.theme') }}</span>
-        <div class="flex items-center gap-1 group-data-[collapsible=icon]:flex-col">
-          <LocaleToggle />
-          <ThemeToggle />
-        </div>
-      </div>
+      <SidebarMenu>
+        <SidebarMenuItem>
+          <SidebarMenuButton :tooltip="$t('common.settings')" @click="settingsDialog.open()">
+            <SettingsIcon />
+            <span>{{ $t('common.settings') }}</span>
+          </SidebarMenuButton>
+        </SidebarMenuItem>
+      </SidebarMenu>
     </SidebarFooter>
   </Sidebar>
 </template>

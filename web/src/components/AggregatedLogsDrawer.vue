@@ -3,7 +3,7 @@ import { computed, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { useIntervalFn } from '@vueuse/core'
 import { useClusterStore } from '@/stores/cluster'
-import { AUTO_REFRESH_INTERVAL_MS } from '@/lib/constants'
+import { useSettingsStore } from '@/stores/settings'
 import { useLogScroll } from '@/composables/useLogScroll'
 import { useLogSearch } from '@/composables/useLogSearch'
 import {
@@ -45,6 +45,7 @@ interface LogLine {
 
 const route = useRoute()
 const store = useClusterStore()
+const settings = useSettingsStore()
 
 const status = ref<'idle' | 'loading' | 'ready' | 'error'>('idle')
 const isRefreshing = ref(false)
@@ -126,12 +127,12 @@ const { pause: pauseAutoRefresh, resume: resumeAutoRefresh } = useIntervalFn(
   () => {
     if (props.open && isAtBottom.value) fetchAllLogs()
   },
-  AUTO_REFRESH_INTERVAL_MS,
+  () => settings.refreshIntervalMs,
   { immediate: false },
 )
 
 watch(
-  [() => store.autoRefresh, () => props.open],
+  [() => settings.autoRefresh, () => props.open],
   ([enabled, isOpen]) => {
     if (enabled && isOpen) resumeAutoRefresh()
     else pauseAutoRefresh()
@@ -196,7 +197,7 @@ const {
               <RefreshCwIcon data-icon="inline-start" :class="{ 'animate-spin': isRefreshing }" />
               {{ $t('common.refresh') }}
             </Button>
-            <span v-if="store.autoRefresh" class="text-xs text-muted-foreground">{{ $t('common.autoRefreshActive') }}</span>
+            <span v-if="settings.autoRefresh" class="text-xs text-muted-foreground">{{ $t('common.autoRefreshActive') }}</span>
             <span v-if="error" class="text-xs text-destructive">{{ error }}</span>
 
             <div class="ml-auto flex items-center gap-2">

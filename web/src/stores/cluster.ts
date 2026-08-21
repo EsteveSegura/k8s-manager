@@ -29,7 +29,6 @@ interface ClusterState {
   lastUpdatedAt: number | null
   loadedForContext: string | null
   selectedResource: SelectedResource | null
-  autoRefresh: boolean
   podMetrics: Record<string, any>
   metricsStatus: 'idle' | 'loading' | 'ready' | 'unavailable'
   metricsUpdatedAt: number | null
@@ -50,7 +49,6 @@ export const useClusterStore = defineStore('cluster', {
     lastUpdatedAt: null,
     loadedForContext: null,
     selectedResource: null,
-    autoRefresh: false,
     podMetrics: {},
     metricsStatus: 'idle',
     metricsUpdatedAt: null,
@@ -143,10 +141,6 @@ export const useClusterStore = defineStore('cluster', {
 
     clearSelection() {
       this.selectedResource = null
-    },
-
-    setAutoRefresh(enabled: boolean) {
-      this.autoRefresh = enabled
     },
 
     setFilterText(value: string) {

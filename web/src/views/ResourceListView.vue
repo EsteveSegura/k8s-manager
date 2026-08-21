@@ -3,26 +3,26 @@ import { computed, onMounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useIntervalFn } from '@vueuse/core'
 import { useClusterStore } from '@/stores/cluster'
+import { useSettingsStore } from '@/stores/settings'
 import AppSidebar from '@/components/AppSidebar.vue'
 import AppBreadcrumb from '@/components/AppBreadcrumb.vue'
 import DescribePanel from '@/components/describe/DescribePanel.vue'
-import { SidebarProvider, SidebarInset, SidebarTrigger } from '@/components/ui/sidebar'
+import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar'
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from '@/components/ui/resizable'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { InputGroup, InputGroupInput, InputGroupAddon, InputGroupButton } from '@/components/ui/input-group'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Switch } from '@/components/ui/switch'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Empty, EmptyHeader, EmptyTitle, EmptyDescription, EmptyMedia } from '@/components/ui/empty'
 import { Separator } from '@/components/ui/separator'
-import { InboxIcon, RefreshCwIcon, XIcon } from '@lucide/vue'
-import { AUTO_REFRESH_INTERVAL_MS } from '@/lib/constants'
+import { InboxIcon, RefreshCwIcon, XIcon, ArrowLeftIcon } from '@lucide/vue'
 import type { ResourceKind } from '@/stores/cluster'
 
 const props = defineProps<{ kind: ResourceKind }>()
 
 const store = useClusterStore()
+const settings = useSettingsStore()
 const route = useRoute()
 const router = useRouter()
 
@@ -31,12 +31,12 @@ const filterText = computed({
   set: (value: string) => store.setFilterText(value),
 })
 
-const autoRefresh = computed({
-  get: () => store.autoRefresh,
-  set: (value: boolean) => store.setAutoRefresh(value),
-})
-
 const context = computed(() => String(route.params.context))
+
+function changeCluster() {
+  store.resetForNewContext()
+  router.push('/')
+}
 
 async function ensureLoaded() {
   try {
@@ -56,12 +56,12 @@ async function refreshNow() {
   store.loadMetrics(context.value, { force: true })
 }
 
-const { pause: pauseAutoRefresh, resume: resumeAutoRefresh } = useIntervalFn(refreshNow, AUTO_REFRESH_INTERVAL_MS, {
+const { pause: pauseAutoRefresh, resume: resumeAutoRefresh } = useIntervalFn(refreshNow, () => settings.refreshIntervalMs, {
   immediate: false,
 })
 
 watch(
-  autoRefresh,
+  () => settings.autoRefresh,
   (enabled) => {
     if (enabled) resumeAutoRefresh()
     else pauseAutoRefresh()
@@ -138,7 +138,9 @@ function serviceExposure(item: any) {
     <AppSidebar />
     <SidebarInset class="min-w-0 min-h-0">
       <header class="flex h-14 min-w-0 shrink-0 items-center gap-2 border-b px-4">
-        <SidebarTrigger />
+        <Button variant="ghost" size="icon-sm" :aria-label="$t('common.changeCluster')" @click="changeCluster">
+          <ArrowLeftIcon />
+        </Button>
         <Separator orientation="vertical" class="my-2" />
         <AppBreadcrumb />
       </header>
@@ -159,10 +161,9 @@ function serviceExposure(item: any) {
             {{ $t('common.refresh') }}
           </Button>
 
-          <label class="flex shrink-0 items-center gap-2 text-sm text-muted-foreground">
-            <Switch v-model="autoRefresh" />
-            {{ $t('resourceList.autoRefresh', { seconds: AUTO_REFRESH_INTERVAL_MS / 1000 }) }}
-          </label>
+          <span v-if="settings.autoRefresh" class="shrink-0 text-xs text-muted-foreground">
+            {{ $t('common.autoRefreshActive') }}
+          </span>
 
           <span v-if="lastUpdatedLabel" class="shrink-0 text-xs text-muted-foreground">
             {{ $t('common.updatedAt', { time: lastUpdatedLabel }) }}

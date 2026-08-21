@@ -6,9 +6,7 @@ export default {
     clearSearch: 'Clear search',
     changeCluster: 'Change cluster',
     cluster: 'Cluster',
-    theme: 'Theme',
-    enableLightMode: 'Switch to light mode',
-    enableDarkMode: 'Switch to dark mode',
+    settings: 'Settings',
     updatedAt: 'Updated at {time}',
     autoRefreshActive: 'Auto-refresh active',
   },
@@ -39,7 +37,6 @@ export default {
 
   resourceList: {
     filterPlaceholder: 'Filter by namespace or name...',
-    autoRefresh: 'Auto-refresh ({seconds}s)',
     loadErrorTitle: 'Failed to load resources',
     emptyTitle: 'No results',
     emptyDescription: 'No resources match the filter.',
@@ -122,6 +119,18 @@ export default {
     description: 'Search by namespace or name',
     placeholder: 'Search deployments, services or pods...',
     empty: 'No results.',
+    commandsHeading: 'Commands',
+    commandBadge: 'Command',
+  },
+
+  settings: {
+    title: 'Settings',
+    description: 'Language, theme and auto-refresh preferences.',
+    language: 'Language',
+    darkMode: 'Dark mode',
+    autoRefresh: 'Auto-refresh',
+    refreshInterval: 'Refresh interval',
+    refreshIntervalHint: 'Between {min} and {max} seconds',
   },
 
   logs: {
