@@ -13,7 +13,7 @@ function toggle() {
 </script>
 
 <template>
-  <Button variant="ghost" size="icon-sm" @click="toggle" :aria-label="isDark ? 'Activar modo claro' : 'Activar modo oscuro'">
+  <Button variant="ghost" size="icon-sm" @click="toggle" :aria-label="isDark ? $t('common.enableLightMode') : $t('common.enableDarkMode')">
     <SunIcon v-if="isDark" />
     <MoonIcon v-else />
   </Button>

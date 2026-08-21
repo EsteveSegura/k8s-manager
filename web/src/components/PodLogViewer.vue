@@ -115,7 +115,7 @@ watch(
     <div class="flex flex-wrap shrink-0 items-center gap-2">
       <Select v-if="containers.length > 1" v-model="selectedContainer">
         <SelectTrigger class="w-56">
-          <SelectValue placeholder="Selecciona un container" />
+          <SelectValue :placeholder="$t('logs.selectContainer')" />
         </SelectTrigger>
         <SelectContent>
           <SelectGroup>
@@ -126,23 +126,23 @@ watch(
 
       <Button variant="outline" size="sm" :disabled="status === 'loading'" @click="fetchLogs">
         <RefreshCwIcon data-icon="inline-start" :class="{ 'animate-spin': isRefreshing }" />
-        Refrescar
+        {{ $t('common.refresh') }}
       </Button>
 
-      <span v-if="store.autoRefresh" class="text-xs text-muted-foreground">Auto-refresco activo</span>
+      <span v-if="store.autoRefresh" class="text-xs text-muted-foreground">{{ $t('common.autoRefreshActive') }}</span>
 
       <div class="ml-auto flex items-center gap-2">
         <InputGroup class="max-w-64">
           <InputGroupInput
             v-model="searchQuery"
-            placeholder="Buscar en los logs..."
+            :placeholder="$t('logs.searchPlaceholder')"
             @keydown="onSearchKeydown"
           />
           <InputGroupAddon>
             <SearchIcon class="size-4 shrink-0 opacity-50" />
           </InputGroupAddon>
           <InputGroupAddon v-if="searchQuery" align="inline-end">
-            <InputGroupButton size="icon-xs" aria-label="Limpiar búsqueda" @click="clearSearch">
+            <InputGroupButton size="icon-xs" :aria-label="$t('common.clearSearch')" @click="clearSearch">
               <XIcon />
             </InputGroupButton>
           </InputGroupAddon>
@@ -152,10 +152,10 @@ watch(
           <span class="shrink-0 text-xs text-muted-foreground tabular-nums">
             {{ searchMatches.length ? searchActiveIndex + 1 : 0 }}/{{ searchMatches.length }}{{ searchIsCapped ? '+' : '' }}
           </span>
-          <Button variant="outline" size="icon-sm" :disabled="!searchMatches.length" aria-label="Coincidencia anterior" @click="prevMatch">
+          <Button variant="outline" size="icon-sm" :disabled="!searchMatches.length" :aria-label="$t('logs.prevMatch')" @click="prevMatch">
             <ChevronUpIcon />
           </Button>
-          <Button variant="outline" size="icon-sm" :disabled="!searchMatches.length" aria-label="Coincidencia siguiente" @click="nextMatch">
+          <Button variant="outline" size="icon-sm" :disabled="!searchMatches.length" :aria-label="$t('logs.nextMatch')" @click="nextMatch">
             <ChevronDownIcon />
           </Button>
         </template>
@@ -168,7 +168,7 @@ watch(
           <Skeleton v-if="status === 'loading' || status === 'idle'" class="h-64 w-full" />
           <Empty v-else-if="status === 'error'">
             <EmptyHeader>
-              <EmptyTitle>No se pudieron cargar los logs</EmptyTitle>
+              <EmptyTitle>{{ $t('logs.loadErrorTitle') }}</EmptyTitle>
               <EmptyDescription>{{ error }}</EmptyDescription>
             </EmptyHeader>
           </Empty>
@@ -183,7 +183,7 @@ watch(
       <div v-if="!isAtBottom" class="absolute inset-x-0 bottom-3 flex justify-center">
         <Button size="sm" variant="secondary" class="shadow-md" @click="resumeFollowing">
           <ArrowDownIcon data-icon="inline-start" />
-          Volver al final
+          {{ $t('logs.jumpToBottom') }}
         </Button>
       </div>
     </div>

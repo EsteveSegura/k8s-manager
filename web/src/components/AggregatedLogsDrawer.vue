@@ -179,14 +179,14 @@ const {
     <DrawerContent class="h-[85vh] max-h-[85vh] overflow-hidden">
       <DrawerHeader class="shrink-0">
         <DrawerTitle>{{ title }}</DrawerTitle>
-        <DrawerDescription>{{ description }} · {{ pods.length }} pod{{ pods.length === 1 ? '' : 's' }}</DrawerDescription>
+        <DrawerDescription>{{ description }} · {{ $t('logs.podCount', pods.length) }}</DrawerDescription>
       </DrawerHeader>
 
       <div class="flex min-h-0 min-w-0 flex-1 flex-col gap-2 overflow-y-auto px-4 pb-4">
         <Empty v-if="pods.length === 0">
           <EmptyHeader>
-            <EmptyTitle>Sin pods</EmptyTitle>
-            <EmptyDescription>No hay pods activos que coincidan con este recurso.</EmptyDescription>
+            <EmptyTitle>{{ $t('logs.noPodsTitle') }}</EmptyTitle>
+            <EmptyDescription>{{ $t('logs.noPodsDescription') }}</EmptyDescription>
           </EmptyHeader>
         </Empty>
 
@@ -194,23 +194,23 @@ const {
           <div class="flex flex-wrap shrink-0 items-center gap-2">
             <Button variant="outline" size="sm" :disabled="status === 'loading'" @click="fetchAllLogs">
               <RefreshCwIcon data-icon="inline-start" :class="{ 'animate-spin': isRefreshing }" />
-              Refrescar
+              {{ $t('common.refresh') }}
             </Button>
-            <span v-if="store.autoRefresh" class="text-xs text-muted-foreground">Auto-refresco activo</span>
+            <span v-if="store.autoRefresh" class="text-xs text-muted-foreground">{{ $t('common.autoRefreshActive') }}</span>
             <span v-if="error" class="text-xs text-destructive">{{ error }}</span>
 
             <div class="ml-auto flex items-center gap-2">
               <InputGroup class="max-w-64">
                 <InputGroupInput
                   v-model="searchQuery"
-                  placeholder="Buscar en los logs..."
+                  :placeholder="$t('logs.searchPlaceholder')"
                   @keydown="onSearchKeydown"
                 />
                 <InputGroupAddon>
                   <SearchIcon class="size-4 shrink-0 opacity-50" />
                 </InputGroupAddon>
                 <InputGroupAddon v-if="searchQuery" align="inline-end">
-                  <InputGroupButton size="icon-xs" aria-label="Limpiar búsqueda" @click="clearSearch">
+                  <InputGroupButton size="icon-xs" :aria-label="$t('common.clearSearch')" @click="clearSearch">
                     <XIcon />
                   </InputGroupButton>
                 </InputGroupAddon>
@@ -220,10 +220,10 @@ const {
                 <span class="shrink-0 text-xs text-muted-foreground tabular-nums">
                   {{ searchMatches.length ? searchActiveIndex + 1 : 0 }}/{{ searchMatches.length }}{{ searchIsCapped ? '+' : '' }}
                 </span>
-                <Button variant="outline" size="icon-sm" :disabled="!searchMatches.length" aria-label="Coincidencia anterior" @click="prevMatch">
+                <Button variant="outline" size="icon-sm" :disabled="!searchMatches.length" :aria-label="$t('logs.prevMatch')" @click="prevMatch">
                   <ChevronUpIcon />
                 </Button>
-                <Button variant="outline" size="icon-sm" :disabled="!searchMatches.length" aria-label="Coincidencia siguiente" @click="nextMatch">
+                <Button variant="outline" size="icon-sm" :disabled="!searchMatches.length" :aria-label="$t('logs.nextMatch')" @click="nextMatch">
                   <ChevronDownIcon />
                 </Button>
               </template>
@@ -236,14 +236,14 @@ const {
                 <Skeleton v-if="status === 'loading' || status === 'idle'" class="h-64 w-full" />
                 <Empty v-else-if="status === 'error'">
                   <EmptyHeader>
-                    <EmptyTitle>No se pudieron cargar los logs</EmptyTitle>
+                    <EmptyTitle>{{ $t('logs.loadErrorTitle') }}</EmptyTitle>
                     <EmptyDescription>{{ error }}</EmptyDescription>
                   </EmptyHeader>
                 </Empty>
                 <Empty v-else-if="lines.length === 0">
                   <EmptyHeader>
-                    <EmptyTitle>Sin líneas de log</EmptyTitle>
-                    <EmptyDescription>Los pods no han producido salida reciente.</EmptyDescription>
+                    <EmptyTitle>{{ $t('logs.emptyLinesTitle') }}</EmptyTitle>
+                    <EmptyDescription>{{ $t('logs.emptyLinesDescription') }}</EmptyDescription>
                   </EmptyHeader>
                 </Empty>
                 <pre v-else class="font-mono text-xs whitespace-pre-wrap break-words select-text cursor-text"><template v-for="(segment, i) in logSegments" :key="i"><mark
@@ -257,7 +257,7 @@ const {
             <div v-if="!isAtBottom" class="absolute inset-x-0 bottom-3 flex justify-center">
               <Button size="sm" variant="secondary" class="shadow-md" @click="resumeFollowing">
                 <ArrowDownIcon data-icon="inline-start" />
-                Volver al final
+                {{ $t('logs.jumpToBottom') }}
               </Button>
             </div>
           </div>
@@ -266,7 +266,7 @@ const {
 
       <DrawerFooter class="shrink-0">
         <DrawerClose as-child>
-          <Button variant="outline">Cerrar</Button>
+          <Button variant="outline">{{ $t('common.close') }}</Button>
         </DrawerClose>
       </DrawerFooter>
     </DrawerContent>

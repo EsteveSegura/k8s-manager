@@ -16,8 +16,8 @@ const store = useClusterStore()
       <Empty v-if="!store.selectedResource || !store.selectedResourceObject">
         <EmptyHeader>
           <EmptyMedia variant="icon"><FileSearchIcon /></EmptyMedia>
-          <EmptyTitle>Ningún recurso seleccionado</EmptyTitle>
-          <EmptyDescription>Haz click en una fila de la tabla para ver su detalle aquí.</EmptyDescription>
+          <EmptyTitle>{{ $t('describe.emptyTitle') }}</EmptyTitle>
+          <EmptyDescription>{{ $t('describe.emptyDescription') }}</EmptyDescription>
         </EmptyHeader>
       </Empty>
 

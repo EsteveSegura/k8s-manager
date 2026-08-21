@@ -55,14 +55,14 @@ function podPhaseVariant(phase: string) {
       </div>
       <Button size="sm" @click="logsOpen = true">
         <ScrollTextIcon data-icon="inline-start" />
-        Ver logs de todos los pods
+        {{ $t('describe.viewAllLogs') }}
       </Button>
     </div>
 
     <Card>
       <CardHeader>
-        <CardTitle class="text-sm">Exposición de red</CardTitle>
-        <CardDescription>Tipo, IP y puertos del Service</CardDescription>
+        <CardTitle class="text-sm">{{ $t('describe.service.networkTitle') }}</CardTitle>
+        <CardDescription>{{ $t('describe.service.networkDescription') }}</CardDescription>
       </CardHeader>
       <CardContent class="flex flex-wrap items-center gap-4 text-sm">
         <Badge variant="outline">{{ spec.type || 'ClusterIP' }}</Badge>
@@ -75,17 +75,17 @@ function podPhaseVariant(phase: string) {
 
     <Card>
       <CardHeader>
-        <CardTitle class="text-sm">Puertos</CardTitle>
+        <CardTitle class="text-sm">{{ $t('describe.service.portsTitle') }}</CardTitle>
       </CardHeader>
       <CardContent>
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Nombre</TableHead>
-              <TableHead>Puerto</TableHead>
-              <TableHead>Target</TableHead>
-              <TableHead>NodePort</TableHead>
-              <TableHead>Protocolo</TableHead>
+              <TableHead>{{ $t('describe.service.columns.name') }}</TableHead>
+              <TableHead>{{ $t('describe.service.columns.port') }}</TableHead>
+              <TableHead>{{ $t('describe.service.columns.target') }}</TableHead>
+              <TableHead>{{ $t('describe.service.columns.nodePort') }}</TableHead>
+              <TableHead>{{ $t('describe.service.columns.protocol') }}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -102,8 +102,8 @@ function podPhaseVariant(phase: string) {
     </Card>
 
     <ResourceUsageCard
-      title="Recursos (agregado)"
-      description="Suma de CPU y memoria de todos los pods de este Service"
+      :title="$t('describe.service.usageTitle')"
+      :description="$t('describe.service.usageDescription')"
       :totals="resourceTotals"
       :metrics-available="store.metricsStatus !== 'unavailable'"
       :history="resourceHistory"
@@ -111,7 +111,7 @@ function podPhaseVariant(phase: string) {
 
     <Card>
       <CardHeader>
-        <CardTitle class="text-sm">Selector</CardTitle>
+        <CardTitle class="text-sm">{{ $t('describe.service.selectorTitle') }}</CardTitle>
       </CardHeader>
       <CardContent class="flex min-w-0 flex-wrap gap-2">
         <Badge
@@ -122,20 +122,20 @@ function podPhaseVariant(phase: string) {
         >
           {{ key }}={{ value }}
         </Badge>
-        <span v-if="selectorEntries.length === 0" class="text-muted-foreground text-sm">Sin selector (Service manual/externo)</span>
+        <span v-if="selectorEntries.length === 0" class="text-muted-foreground text-sm">{{ $t('describe.service.noSelector') }}</span>
       </CardContent>
     </Card>
 
     <Card>
       <CardHeader>
         <CardTitle class="text-sm">Pods</CardTitle>
-        <CardDescription>Pods a los que enruta este Service</CardDescription>
+        <CardDescription>{{ $t('describe.service.podsDescription') }}</CardDescription>
       </CardHeader>
       <CardContent class="flex flex-col gap-2 text-sm">
         <Empty v-if="relatedPods.length === 0">
           <EmptyHeader>
-            <EmptyTitle>Sin pods</EmptyTitle>
-            <EmptyDescription>Ningún pod activo coincide con el selector de este Service.</EmptyDescription>
+            <EmptyTitle>{{ $t('describe.service.noPodsTitle') }}</EmptyTitle>
+            <EmptyDescription>{{ $t('describe.service.noPodsDescription') }}</EmptyDescription>
           </EmptyHeader>
         </Empty>
         <button
@@ -156,7 +156,7 @@ function podPhaseVariant(phase: string) {
 
     <AggregatedLogsDrawer
       v-model:open="logsOpen"
-      title="Logs de todos los pods"
+      :title="$t('logs.allLogsTitle')"
       :description="`Service ${resource.metadata.name}`"
       :pods="logTargets"
     />

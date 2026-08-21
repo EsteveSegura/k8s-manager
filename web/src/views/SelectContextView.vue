@@ -14,6 +14,7 @@ import { Empty, EmptyHeader, EmptyTitle, EmptyDescription, EmptyMedia } from '@/
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { ServerIcon } from '@lucide/vue'
 import ThemeToggle from '@/components/ThemeToggle.vue'
+import LocaleToggle from '@/components/LocaleToggle.vue'
 import type { K8sContext } from '@/stores/cluster'
 
 const store = useClusterStore()
@@ -35,9 +36,12 @@ function selectContext(context: K8sContext) {
       <div class="flex items-start justify-between gap-2">
         <div class="flex flex-col gap-1">
           <h1 class="text-2xl font-semibold">k8s-manager</h1>
-          <p class="text-muted-foreground text-sm">Selecciona un contexto de kubeconfig para explorar el clúster.</p>
+          <p class="text-muted-foreground text-sm">{{ $t('selectContext.subtitle') }}</p>
         </div>
-        <ThemeToggle />
+        <div class="flex items-center gap-1">
+          <LocaleToggle />
+          <ThemeToggle />
+        </div>
       </div>
 
       <ResizablePanelGroup direction="horizontal" class="min-h-[24rem] rounded-lg border">
@@ -53,8 +57,8 @@ function selectContext(context: K8sContext) {
                   <EmptyMedia variant="icon">
                     <ServerIcon />
                   </EmptyMedia>
-                  <EmptyTitle>Sin contextos</EmptyTitle>
-                  <EmptyDescription>No se encontró ningún contexto en tu kubeconfig.</EmptyDescription>
+                  <EmptyTitle>{{ $t('selectContext.emptyTitle') }}</EmptyTitle>
+                  <EmptyDescription>{{ $t('selectContext.emptyDescription') }}</EmptyDescription>
                 </EmptyHeader>
               </Empty>
 
@@ -69,7 +73,7 @@ function selectContext(context: K8sContext) {
                 <CardHeader class="min-w-0">
                   <CardTitle class="flex min-w-0 items-center gap-2 text-base">
                     <span class="truncate">{{ context.cluster }}</span>
-                    <Badge v-if="context.isCurrent" variant="secondary" class="shrink-0">actual</Badge>
+                    <Badge v-if="context.isCurrent" variant="secondary" class="shrink-0">{{ $t('selectContext.current') }}</Badge>
                   </CardTitle>
                   <CardDescription class="truncate">{{ context.name }}</CardDescription>
                 </CardHeader>
@@ -87,21 +91,21 @@ function selectContext(context: K8sContext) {
                 <EmptyMedia variant="icon">
                   <ServerIcon />
                 </EmptyMedia>
-                <EmptyTitle>Detalle del contexto</EmptyTitle>
-                <EmptyDescription>Pasa el cursor sobre un contexto para ver su detalle.</EmptyDescription>
+                <EmptyTitle>{{ $t('selectContext.detailTitle') }}</EmptyTitle>
+                <EmptyDescription>{{ $t('selectContext.detailHint') }}</EmptyDescription>
               </EmptyHeader>
             </Empty>
             <div v-else class="flex w-full flex-col gap-3">
               <div>
-                <p class="text-muted-foreground text-xs uppercase tracking-wide">Nombre del contexto</p>
+                <p class="text-muted-foreground text-xs uppercase tracking-wide">{{ $t('selectContext.contextNameLabel') }}</p>
                 <p class="font-mono text-sm break-all">{{ hoveredContext.name }}</p>
               </div>
               <div>
-                <p class="text-muted-foreground text-xs uppercase tracking-wide">Cluster</p>
+                <p class="text-muted-foreground text-xs uppercase tracking-wide">{{ $t('selectContext.clusterLabel') }}</p>
                 <p class="font-mono text-sm break-all">{{ hoveredContext.cluster }}</p>
               </div>
               <div>
-                <p class="text-muted-foreground text-xs uppercase tracking-wide">Namespace por defecto</p>
+                <p class="text-muted-foreground text-xs uppercase tracking-wide">{{ $t('selectContext.namespaceLabel') }}</p>
                 <p class="font-mono text-sm">{{ hoveredContext.namespace || 'default' }}</p>
               </div>
             </div>

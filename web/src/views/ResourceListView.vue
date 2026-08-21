@@ -146,9 +146,9 @@ function serviceExposure(item: any) {
       <div class="flex min-w-0 flex-1 flex-col gap-3 p-4 min-h-0">
         <div class="flex min-w-0 flex-wrap items-center gap-3">
           <InputGroup class="max-w-sm">
-            <InputGroupInput v-model="filterText" placeholder="Filtrar por namespace o nombre..." />
+            <InputGroupInput v-model="filterText" :placeholder="$t('resourceList.filterPlaceholder')" />
             <InputGroupAddon v-if="filterText" align="inline-end">
-              <InputGroupButton size="icon-xs" aria-label="Limpiar filtro" @click="filterText = ''">
+              <InputGroupButton size="icon-xs" :aria-label="$t('common.clearFilter')" @click="filterText = ''">
                 <XIcon />
               </InputGroupButton>
             </InputGroupAddon>
@@ -156,16 +156,16 @@ function serviceExposure(item: any) {
 
           <Button variant="outline" size="sm" :disabled="store.isRefreshing" @click="refreshNow">
             <RefreshCwIcon data-icon="inline-start" :class="{ 'animate-spin': store.isRefreshing }" />
-            Refrescar
+            {{ $t('common.refresh') }}
           </Button>
 
           <label class="flex shrink-0 items-center gap-2 text-sm text-muted-foreground">
             <Switch v-model="autoRefresh" />
-            Auto-refresco (5s)
+            {{ $t('resourceList.autoRefresh', { seconds: AUTO_REFRESH_INTERVAL_MS / 1000 }) }}
           </label>
 
           <span v-if="lastUpdatedLabel" class="shrink-0 text-xs text-muted-foreground">
-            Actualizado a las {{ lastUpdatedLabel }}
+            {{ $t('common.updatedAt', { time: lastUpdatedLabel }) }}
           </span>
         </div>
 
@@ -181,7 +181,7 @@ function serviceExposure(item: any) {
               <Empty v-else-if="store.resourcesStatus === 'error'">
                 <EmptyHeader>
                   <EmptyMedia variant="icon"><InboxIcon /></EmptyMedia>
-                  <EmptyTitle>Error al cargar recursos</EmptyTitle>
+                  <EmptyTitle>{{ $t('resourceList.loadErrorTitle') }}</EmptyTitle>
                   <EmptyDescription>{{ store.resourcesError }}</EmptyDescription>
                 </EmptyHeader>
               </Empty>
@@ -189,8 +189,8 @@ function serviceExposure(item: any) {
               <Empty v-else-if="filteredItems.length === 0">
                 <EmptyHeader>
                   <EmptyMedia variant="icon"><InboxIcon /></EmptyMedia>
-                  <EmptyTitle>Sin resultados</EmptyTitle>
-                  <EmptyDescription>No hay recursos que coincidan con el filtro.</EmptyDescription>
+                  <EmptyTitle>{{ $t('resourceList.emptyTitle') }}</EmptyTitle>
+                  <EmptyDescription>{{ $t('resourceList.emptyDescription') }}</EmptyDescription>
                 </EmptyHeader>
               </Empty>
 
@@ -198,12 +198,12 @@ function serviceExposure(item: any) {
                 <TableHeader>
                   <TableRow>
                     <TableHead>Namespace</TableHead>
-                    <TableHead>Nombre</TableHead>
-                    <TableHead v-if="kind === 'deployments'">Réplicas</TableHead>
-                    <TableHead v-if="kind === 'services'">Tipo</TableHead>
-                    <TableHead v-if="kind === 'services'">Puertos</TableHead>
-                    <TableHead v-if="kind === 'pods'">Estado</TableHead>
-                    <TableHead v-if="kind === 'pods'">Nodo</TableHead>
+                    <TableHead>{{ $t('resourceList.columns.name') }}</TableHead>
+                    <TableHead v-if="kind === 'deployments'">{{ $t('resourceList.columns.replicas') }}</TableHead>
+                    <TableHead v-if="kind === 'services'">{{ $t('resourceList.columns.type') }}</TableHead>
+                    <TableHead v-if="kind === 'services'">{{ $t('resourceList.columns.ports') }}</TableHead>
+                    <TableHead v-if="kind === 'pods'">{{ $t('resourceList.columns.status') }}</TableHead>
+                    <TableHead v-if="kind === 'pods'">{{ $t('resourceList.columns.node') }}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>

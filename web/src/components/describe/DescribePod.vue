@@ -45,24 +45,24 @@ function phaseVariant(phase: string) {
       </div>
       <Button size="sm" @click="logsOpen = true">
         <ScrollTextIcon data-icon="inline-start" />
-        Ver logs
+        {{ $t('describe.viewLogs') }}
       </Button>
     </div>
 
     <Card>
       <CardHeader>
-        <CardTitle class="text-sm">Estado</CardTitle>
+        <CardTitle class="text-sm">{{ $t('describe.pod.statusTitle') }}</CardTitle>
       </CardHeader>
       <CardContent class="flex flex-wrap items-center gap-4 text-sm">
         <Badge :variant="phaseVariant(status.phase)">{{ status.phase || 'Unknown' }}</Badge>
-        <div><span class="text-muted-foreground">Nodo: </span>{{ spec.nodeName || '-' }}</div>
+        <div><span class="text-muted-foreground">{{ $t('describe.pod.node') }}</span>{{ spec.nodeName || '-' }}</div>
         <div><span class="text-muted-foreground">IP: </span>{{ status.podIP || '-' }}</div>
       </CardContent>
     </Card>
 
     <ResourceUsageCard
-      title="Recursos"
-      description="CPU y memoria de este pod"
+      :title="$t('describe.pod.usageTitle')"
+      :description="$t('describe.pod.usageDescription')"
       :totals="resourceTotals"
       :metrics-available="store.metricsStatus !== 'unavailable'"
       :history="resourceHistory"
@@ -71,7 +71,7 @@ function phaseVariant(phase: string) {
     <Card>
       <CardHeader>
         <CardTitle class="text-sm">Containers</CardTitle>
-        <CardDescription>Imagen, estado y variables de entorno</CardDescription>
+        <CardDescription>{{ $t('describe.pod.containersDescription') }}</CardDescription>
       </CardHeader>
       <CardContent class="flex flex-col gap-3 text-sm">
         <div v-for="container in containers" :key="container.name" class="flex flex-col gap-1">
@@ -82,7 +82,7 @@ function phaseVariant(phase: string) {
           </div>
           <div class="text-muted-foreground font-mono text-xs break-all">{{ container.image }}</div>
           <div v-if="container.env?.length" class="flex min-w-0 flex-col gap-0.5 pl-2">
-            <span class="text-muted-foreground text-xs">Env vars:</span>
+            <span class="text-muted-foreground text-xs">{{ $t('describe.envVarsLabel') }}</span>
             <div v-for="envVar in container.env" :key="envVar.name" class="break-all font-mono text-xs">
               {{ envVar.name }}={{ envVar.value ?? '(from secret/configMap)' }}
             </div>

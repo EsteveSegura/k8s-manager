@@ -45,13 +45,13 @@ function selectItem(kind: ResourceKind, item: any) {
 </script>
 
 <template>
-  <CommandDialog v-model:open="open" title="Buscar recurso" description="Busca por namespace o nombre">
+  <CommandDialog v-model:open="open" :title="$t('commandPalette.title')" :description="$t('commandPalette.description')">
     <CommandInput
-      placeholder="Buscar deployments, services o pods..."
+      :placeholder="$t('commandPalette.placeholder')"
       @update:model-value="(value) => (query = String(value))"
     />
     <CommandList>
-      <CommandEmpty>Sin resultados.</CommandEmpty>
+      <CommandEmpty>{{ $t('commandPalette.empty') }}</CommandEmpty>
       <CommandGroup v-for="group in groups" :key="group.kind" :heading="group.label">
         <CommandItem
           v-for="item in store.resourcesByKind(group.kind)"

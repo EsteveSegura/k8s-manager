@@ -25,8 +25,8 @@ const emit = defineEmits<{ 'update:open': [boolean] }>()
   <Drawer :open="open" @update:open="(value) => emit('update:open', value)">
     <DrawerContent class="h-[80vh] max-h-[80vh] overflow-hidden">
       <DrawerHeader class="shrink-0">
-        <DrawerTitle>Logs de {{ name }}</DrawerTitle>
-        <DrawerDescription>{{ namespace }}/{{ name }} · últimas 200 líneas</DrawerDescription>
+        <DrawerTitle>{{ $t('logs.podTitle', { name }) }}</DrawerTitle>
+        <DrawerDescription>{{ $t('logs.podDescription', { namespace, name }) }}</DrawerDescription>
       </DrawerHeader>
 
       <div class="min-h-0 flex-1 overflow-y-auto px-4 pb-4">
@@ -35,7 +35,7 @@ const emit = defineEmits<{ 'update:open': [boolean] }>()
 
       <DrawerFooter class="shrink-0">
         <DrawerClose as-child>
-          <Button variant="outline">Cerrar</Button>
+          <Button variant="outline">{{ $t('common.close') }}</Button>
         </DrawerClose>
       </DrawerFooter>
     </DrawerContent>

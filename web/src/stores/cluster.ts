@@ -1,4 +1,5 @@
 import { defineStore } from 'pinia'
+import { i18n } from '@/i18n'
 
 export interface K8sContext {
   name: string
@@ -98,7 +99,7 @@ export const useClusterStore = defineStore('cluster', {
         const res = await fetch(`/api/${encodeURIComponent(context)}/resources`)
         if (!res.ok) {
           const body = await res.json().catch(() => ({}))
-          throw new Error(body.error || `Error ${res.status} al cargar recursos`)
+          throw new Error(body.error || i18n.global.t('errors.loadResourcesFailed', { status: res.status }))
         }
         const data = await res.json()
         this.deployments = data.deployments

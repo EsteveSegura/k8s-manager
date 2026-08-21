@@ -16,6 +16,7 @@ import {
 } from '@/components/ui/sidebar'
 import { Badge } from '@/components/ui/badge'
 import ThemeToggle from '@/components/ThemeToggle.vue'
+import LocaleToggle from '@/components/LocaleToggle.vue'
 import { BoxesIcon, NetworkIcon, ContainerIcon, ArrowLeftIcon } from '@lucide/vue'
 
 const store = useClusterStore()
@@ -49,10 +50,10 @@ function changeCluster() {
     <SidebarHeader>
       <div class="flex items-center justify-between gap-2 px-2 py-1.5 group-data-[collapsible=icon]:justify-center">
         <div class="flex min-w-0 flex-col group-data-[collapsible=icon]:hidden">
-          <span class="text-xs text-muted-foreground">Cluster</span>
+          <span class="text-xs text-muted-foreground">{{ $t('common.cluster') }}</span>
           <span class="truncate text-sm font-medium">{{ context }}</span>
         </div>
-        <SidebarMenuButton as-child class="w-auto shrink-0" tooltip="Cambiar cluster" @click="changeCluster">
+        <SidebarMenuButton as-child class="w-auto shrink-0" :tooltip="$t('common.changeCluster')" @click="changeCluster">
           <button type="button">
             <ArrowLeftIcon />
           </button>
@@ -62,7 +63,7 @@ function changeCluster() {
 
     <SidebarContent>
       <SidebarGroup>
-        <SidebarGroupLabel>Recursos</SidebarGroupLabel>
+        <SidebarGroupLabel>{{ $t('sidebar.resources') }}</SidebarGroupLabel>
         <SidebarGroupContent>
           <SidebarMenu>
             <SidebarMenuItem v-for="item in navItems" :key="item.kind">
@@ -84,9 +85,12 @@ function changeCluster() {
     </SidebarContent>
 
     <SidebarFooter>
-      <div class="flex items-center justify-between px-2 py-1.5 group-data-[collapsible=icon]:justify-center">
-        <span class="text-xs text-muted-foreground group-data-[collapsible=icon]:hidden">Tema</span>
-        <ThemeToggle />
+      <div class="flex items-center justify-between px-2 py-1.5 group-data-[collapsible=icon]:flex-col group-data-[collapsible=icon]:justify-center">
+        <span class="text-xs text-muted-foreground group-data-[collapsible=icon]:hidden">{{ $t('common.theme') }}</span>
+        <div class="flex items-center gap-1 group-data-[collapsible=icon]:flex-col">
+          <LocaleToggle />
+          <ThemeToggle />
+        </div>
       </div>
     </SidebarFooter>
   </Sidebar>

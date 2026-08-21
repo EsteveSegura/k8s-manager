@@ -124,7 +124,7 @@ function navigateTo(href?: string) {
         <BreadcrumbItem>
           <DropdownMenu>
             <DropdownMenuTrigger
-              aria-label="Mostrar los recursos intermedios de la ruta"
+              :aria-label="$t('breadcrumb.showHidden')"
               class="flex items-center rounded-sm hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             >
               <BreadcrumbEllipsis />

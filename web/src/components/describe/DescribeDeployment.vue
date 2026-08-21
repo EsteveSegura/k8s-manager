@@ -58,26 +58,26 @@ function serviceExposure(service: any) {
       </div>
       <Button size="sm" @click="logsOpen = true">
         <ScrollTextIcon data-icon="inline-start" />
-        Ver logs de todos los pods
+        {{ $t('describe.viewAllLogs') }}
       </Button>
     </div>
 
     <Card>
       <CardHeader>
-        <CardTitle class="text-sm">Réplicas</CardTitle>
-        <CardDescription>Estado de disponibilidad del Deployment</CardDescription>
+        <CardTitle class="text-sm">{{ $t('describe.deployment.replicasTitle') }}</CardTitle>
+        <CardDescription>{{ $t('describe.deployment.replicasDescription') }}</CardDescription>
       </CardHeader>
       <CardContent class="flex flex-wrap gap-4 text-sm">
-        <div><span class="text-muted-foreground">Deseadas: </span>{{ spec.replicas ?? 0 }}</div>
-        <div><span class="text-muted-foreground">Listas: </span>{{ status.readyReplicas || 0 }}</div>
-        <div><span class="text-muted-foreground">Disponibles: </span>{{ status.availableReplicas || 0 }}</div>
-        <div><span class="text-muted-foreground">Actualizadas: </span>{{ status.updatedReplicas || 0 }}</div>
+        <div><span class="text-muted-foreground">{{ $t('describe.deployment.desired') }}</span>{{ spec.replicas ?? 0 }}</div>
+        <div><span class="text-muted-foreground">{{ $t('describe.deployment.ready') }}</span>{{ status.readyReplicas || 0 }}</div>
+        <div><span class="text-muted-foreground">{{ $t('describe.deployment.available') }}</span>{{ status.availableReplicas || 0 }}</div>
+        <div><span class="text-muted-foreground">{{ $t('describe.deployment.updated') }}</span>{{ status.updatedReplicas || 0 }}</div>
       </CardContent>
     </Card>
 
     <Card>
       <CardHeader>
-        <CardTitle class="text-sm">Estrategia</CardTitle>
+        <CardTitle class="text-sm">{{ $t('describe.deployment.strategyTitle') }}</CardTitle>
       </CardHeader>
       <CardContent class="flex flex-wrap items-center gap-4 text-sm">
         <Badge variant="outline">{{ strategy.type || 'RollingUpdate' }}</Badge>
@@ -91,8 +91,8 @@ function serviceExposure(service: any) {
     </Card>
 
     <ResourceUsageCard
-      title="Recursos (agregado)"
-      description="Suma de CPU y memoria de todos los pods de este Deployment"
+      :title="$t('describe.deployment.usageTitle')"
+      :description="$t('describe.deployment.usageDescription')"
       :totals="resourceTotals"
       :metrics-available="store.metricsStatus !== 'unavailable'"
       :history="resourceHistory"
@@ -101,13 +101,13 @@ function serviceExposure(service: any) {
     <Card>
       <CardHeader>
         <CardTitle class="text-sm">Services</CardTitle>
-        <CardDescription>Services cuyo selector coincide con los pods de este Deployment</CardDescription>
+        <CardDescription>{{ $t('describe.deployment.servicesDescription') }}</CardDescription>
       </CardHeader>
       <CardContent class="flex flex-col gap-2 text-sm">
         <Empty v-if="relatedServices.length === 0">
           <EmptyHeader>
-            <EmptyTitle>Sin Services</EmptyTitle>
-            <EmptyDescription>Ningún Service selecciona los pods de este Deployment.</EmptyDescription>
+            <EmptyTitle>{{ $t('describe.deployment.noServicesTitle') }}</EmptyTitle>
+            <EmptyDescription>{{ $t('describe.deployment.noServicesDescription') }}</EmptyDescription>
           </EmptyHeader>
         </Empty>
         <button
@@ -138,7 +138,7 @@ function serviceExposure(service: any) {
           <div class="font-medium">{{ container.name }}</div>
           <div class="text-muted-foreground font-mono text-xs break-all">{{ container.image }}</div>
           <div v-if="container.env?.length" class="flex min-w-0 flex-col gap-0.5 pl-2">
-            <span class="text-muted-foreground text-xs">Env vars:</span>
+            <span class="text-muted-foreground text-xs">{{ $t('describe.envVarsLabel') }}</span>
             <div v-for="envVar in container.env" :key="envVar.name" class="break-all font-mono text-xs">
               {{ envVar.name }}={{ envVar.value ?? '(from secret/configMap)' }}
             </div>
@@ -150,7 +150,7 @@ function serviceExposure(service: any) {
 
     <AggregatedLogsDrawer
       v-model:open="logsOpen"
-      title="Logs de todos los pods"
+      :title="$t('logs.allLogsTitle')"
       :description="`Deployment ${resource.metadata.name}`"
       :pods="logTargets"
     />

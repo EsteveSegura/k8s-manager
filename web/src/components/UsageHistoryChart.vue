@@ -69,8 +69,8 @@ const tooltipLeftPercent = computed(() => `${Math.min(92, Math.max(8, hoverFract
 <template>
   <Empty v-if="points.length < 2">
     <EmptyHeader>
-      <EmptyTitle>Recopilando histórico...</EmptyTitle>
-      <EmptyDescription>Necesita al menos dos muestras del auto-refresco para poder graficar.</EmptyDescription>
+      <EmptyTitle>{{ $t('chart.collectingTitle') }}</EmptyTitle>
+      <EmptyDescription>{{ $t('chart.collectingDescription') }}</EmptyDescription>
     </EmptyHeader>
   </Empty>
 
@@ -176,7 +176,7 @@ const tooltipLeftPercent = computed(() => `${Math.min(92, Math.max(8, hoverFract
 
       <div class="flex items-center justify-between text-xs text-muted-foreground">
         <span>{{ timeLabel(points[0].timestamp) }}</span>
-        <span v-if="limit">límite: {{ formatValue(limit) }}</span>
+        <span v-if="limit">{{ $t('chart.limit', { value: formatValue(limit) }) }}</span>
         <span :class="isOverLimit ? 'font-medium text-destructive' : ''">
           {{ formatValue(lastPoint!.value) }} · {{ timeLabel(lastPoint!.timestamp) }}
         </span>
