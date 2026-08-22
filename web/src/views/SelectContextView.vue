@@ -8,7 +8,6 @@ import {
   ResizableHandle,
 } from '@/components/ui/resizable'
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Empty, EmptyHeader, EmptyTitle, EmptyDescription, EmptyMedia } from '@/components/ui/empty'
 import { ScrollArea } from '@/components/ui/scroll-area'
@@ -73,7 +72,6 @@ function selectContext(context: K8sContext) {
                 <CardHeader class="min-w-0">
                   <CardTitle class="flex min-w-0 items-center gap-2 text-base">
                     <span class="truncate">{{ context.cluster }}</span>
-                    <Badge v-if="context.isCurrent" variant="secondary" class="shrink-0">{{ $t('selectContext.current') }}</Badge>
                   </CardTitle>
                   <CardDescription class="truncate">{{ context.name }}</CardDescription>
                 </CardHeader>

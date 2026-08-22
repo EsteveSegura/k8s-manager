@@ -5,7 +5,6 @@ export interface K8sContext {
   name: string
   cluster: string
   namespace: string | null
-  isCurrent: boolean
 }
 
 export type ResourceKind =

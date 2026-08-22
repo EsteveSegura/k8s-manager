@@ -30,7 +30,6 @@ export default {
 
   selectContext: {
     subtitle: 'Selecciona un contexto de kubeconfig para explorar el clúster.',
-    current: 'actual',
     emptyTitle: 'Sin contextos',
     emptyDescription: 'No se encontró ningún contexto en tu kubeconfig.',
     detailTitle: 'Detalle del contexto',
