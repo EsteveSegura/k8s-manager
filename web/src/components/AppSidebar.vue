@@ -167,10 +167,13 @@ function togglePin(kind: ResourceKind, event: Event) {
                 <component :is="item.icon" />
                 <span>{{ item.label }}</span>
               </SidebarMenuButton>
-              <Badge variant="secondary" class="absolute right-8 top-1.5 group-data-[collapsible=icon]:hidden">
+              <Badge
+                variant="secondary"
+                class="absolute right-2 top-1.5 group-hover/menu-item:hidden group-data-[collapsible=icon]:hidden"
+              >
                 {{ countFor(item.kind) }}
               </Badge>
-              <SidebarMenuAction :aria-label="$t('sidebar.unpin')" @click="togglePin(item.kind, $event)">
+              <SidebarMenuAction show-on-hover :aria-label="$t('sidebar.unpin')" @click="togglePin(item.kind, $event)">
                 <PinOffIcon />
               </SidebarMenuAction>
             </SidebarMenuItem>
@@ -191,11 +194,14 @@ function togglePin(kind: ResourceKind, event: Event) {
                 <component :is="item.icon" />
                 <span>{{ item.label }}</span>
               </SidebarMenuButton>
-              <Badge variant="secondary" class="absolute right-8 top-1.5 group-data-[collapsible=icon]:hidden">
+              <Badge
+                variant="secondary"
+                class="absolute right-2 top-1.5 group-hover/menu-item:hidden group-data-[collapsible=icon]:hidden"
+              >
                 {{ countFor(item.kind) }}
               </Badge>
               <SidebarMenuAction
-                :show-on-hover="!settings.isPinned(item.kind)"
+                show-on-hover
                 :aria-label="settings.isPinned(item.kind) ? $t('sidebar.unpin') : $t('sidebar.pin')"
                 @click="togglePin(item.kind, $event)"
               >
@@ -219,11 +225,14 @@ function togglePin(kind: ResourceKind, event: Event) {
                 <component :is="item.icon" />
                 <span>{{ item.label }}</span>
               </SidebarMenuButton>
-              <Badge variant="secondary" class="absolute right-8 top-1.5 group-data-[collapsible=icon]:hidden">
+              <Badge
+                variant="secondary"
+                class="absolute right-2 top-1.5 group-hover/menu-item:hidden group-data-[collapsible=icon]:hidden"
+              >
                 {{ countFor(item.kind) }}
               </Badge>
               <SidebarMenuAction
-                :show-on-hover="!settings.isPinned(item.kind)"
+                show-on-hover
                 :aria-label="settings.isPinned(item.kind) ? $t('sidebar.unpin') : $t('sidebar.pin')"
                 @click="togglePin(item.kind, $event)"
               >
