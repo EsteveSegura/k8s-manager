@@ -36,6 +36,7 @@ import {
   PuzzleIcon,
   ShipWheelIcon,
   ActivityIcon,
+  LayoutDashboardIcon,
 } from '@lucide/vue'
 
 const store = useClusterStore()
@@ -103,6 +104,23 @@ function goTo(kind: string) {
     </SidebarHeader>
 
     <SidebarContent>
+      <SidebarGroup>
+        <SidebarGroupContent>
+          <SidebarMenu>
+            <SidebarMenuItem>
+              <SidebarMenuButton
+                :is-active="route.name === 'dashboard'"
+                :tooltip="$t('dashboard.title')"
+                @click="router.push(`/${context}/dashboard`)"
+              >
+                <LayoutDashboardIcon />
+                <span>{{ $t('dashboard.title') }}</span>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          </SidebarMenu>
+        </SidebarGroupContent>
+      </SidebarGroup>
+
       <SidebarGroup v-for="group in navGroups" :key="group.label">
         <SidebarGroupLabel>{{ $t(group.label) }}</SidebarGroupLabel>
         <SidebarGroupContent>

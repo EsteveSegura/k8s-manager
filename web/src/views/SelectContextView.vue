@@ -27,7 +27,7 @@ onMounted(() => {
 })
 
 function selectContext(context: K8sContext) {
-  router.push(`/${context.name}/deployments`)
+  router.push(`/${context.name}/dashboard`)
 }
 </script>
 

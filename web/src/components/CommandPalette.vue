@@ -32,6 +32,7 @@ import {
   ActivityIcon,
   PuzzleIcon,
   ShipWheelIcon,
+  LayoutDashboardIcon,
 } from '@lucide/vue'
 import type { ResourceKind } from '@/stores/cluster'
 
@@ -115,6 +116,13 @@ function goToPage(name: string) {
         <CommandItem value="settings" @select="openSettings">
           <SettingsIcon class="text-muted-foreground" />
           <span>{{ $t('settings.title') }}</span>
+          <CommandShortcut class="rounded-sm bg-muted px-1.5 py-0.5 text-[10px] font-medium normal-case tracking-wide">
+            {{ $t('commandPalette.commandBadge') }}
+          </CommandShortcut>
+        </CommandItem>
+        <CommandItem value="dashboard" @select="goToPage('dashboard')">
+          <LayoutDashboardIcon class="text-muted-foreground" />
+          <span>{{ $t('dashboard.title') }}</span>
           <CommandShortcut class="rounded-sm bg-muted px-1.5 py-0.5 text-[10px] font-medium normal-case tracking-wide">
             {{ $t('commandPalette.commandBadge') }}
           </CommandShortcut>

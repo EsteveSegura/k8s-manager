@@ -4,6 +4,7 @@ import ResourceListView from '@/views/ResourceListView.vue'
 import CustomResourcesView from '@/views/CustomResourcesView.vue'
 import HelmReleasesView from '@/views/HelmReleasesView.vue'
 import EventsView from '@/views/EventsView.vue'
+import DashboardView from '@/views/DashboardView.vue'
 import type { ResourceKind } from '@/stores/cluster'
 
 const LIST_KINDS: ResourceKind[] = [
@@ -26,7 +27,12 @@ const router = createRouter({
   history: createWebHistory(),
   routes: [
     { path: '/', name: 'select-context', component: SelectContextView },
-    { path: '/:context', redirect: (to) => ({ path: `/${to.params.context}/deployments` }) },
+    { path: '/:context', redirect: (to) => ({ path: `/${to.params.context}/dashboard` }) },
+    {
+      path: '/:context/dashboard',
+      name: 'dashboard',
+      component: DashboardView,
+    },
     ...LIST_KINDS.map((kind) => ({
       path: `/:context/${kind}`,
       name: kind,

@@ -104,7 +104,7 @@ const finalCrumb = computed<Crumb | null>(() => {
 // Todos los tramos del breadcrumb en orden, del contexto al recurso actual.
 // El último no lleva `href`: es la página activa (BreadcrumbPage).
 const allCrumbs = computed<Crumb[]>(() => {
-  const list: Crumb[] = [{ label: context.value, href: `/${context.value}/deployments` }]
+  const list: Crumb[] = [{ label: context.value, href: `/${context.value}/dashboard` }]
   if (!resourceName.value) {
     list.push({ label: kindLabel.value })
   } else {

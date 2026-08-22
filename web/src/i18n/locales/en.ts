@@ -304,6 +304,25 @@ export default {
     },
   },
 
+  dashboard: {
+    title: 'Dashboard',
+    issuesTitle: 'Issues detected',
+    issuesDescription: 'Resources that are not healthy or ready right now',
+    noIssuesTitle: 'All clear',
+    noIssuesDescription: 'No issues were detected in the loaded resources.',
+    columns: {
+      kind: 'Kind',
+      resource: 'Resource',
+      reason: 'Reason',
+    },
+    reasons: {
+      nodeNotReady: 'Not Ready',
+      notReadyReplicas: '{ready}/{desired} replicas ready',
+      notReadyDaemons: '{ready}/{desired} ready',
+      jobFailed: 'Job failed',
+    },
+  },
+
   usage: {
     unavailableTitle: 'Metrics unavailable',
     unavailableDescription: 'metrics-server is not responding on this cluster; only requests/limits are shown.',
