@@ -31,3 +31,4 @@ lerna-debug.log*
 # Claude Code
 .claude/
 CLAUDE.md
+BACKLOG.md
