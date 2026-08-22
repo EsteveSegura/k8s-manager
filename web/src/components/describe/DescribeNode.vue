@@ -6,15 +6,19 @@ import { podsForNode } from '@/lib/k8s-relations'
 import { parseCpu, parseMemory, formatCpu, formatMemory } from '@/lib/k8s-quantities'
 import { podRestartCount, podCrashLooping } from '@/lib/pod-status'
 import { formatDateTime } from '@/lib/format'
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card'
+import { useResourceYaml } from '@/composables/useResourceYaml'
+import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardAction } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
 import { Empty, EmptyHeader, EmptyTitle, EmptyDescription } from '@/components/ui/empty'
-import { ContainerIcon } from '@lucide/vue'
+import ResourceYamlDrawer from '@/components/ResourceYamlDrawer.vue'
+import { ContainerIcon, CodeIcon } from '@lucide/vue'
 
 const props = defineProps<{ resource: any }>()
 
 const router = useRouter()
 const store = useClusterStore()
+const { yamlOpen, yaml } = useResourceYaml('nodes', () => props.resource)
 
 const spec = computed(() => props.resource.spec || {})
 const status = computed(() => props.resource.status || {})
@@ -100,6 +104,12 @@ function podPhaseVariant(phase: string) {
     <Card>
       <CardHeader>
         <CardTitle class="text-sm">{{ $t('describe.node.statusTitle') }}</CardTitle>
+        <CardAction>
+          <Button size="sm" variant="outline" @click="yamlOpen = true">
+            <CodeIcon data-icon="inline-start" />
+            {{ $t('describe.viewYaml') }}
+          </Button>
+        </CardAction>
       </CardHeader>
       <CardContent class="flex flex-col gap-3 text-sm">
         <div class="flex flex-wrap gap-2">
@@ -202,5 +212,7 @@ function podPhaseVariant(phase: string) {
         </button>
       </CardContent>
     </Card>
+
+    <ResourceYamlDrawer v-model:open="yamlOpen" :title="resource.metadata.name" :yaml="yaml" />
   </div>
 </template>

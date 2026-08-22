@@ -8,14 +8,16 @@ import { podRestartCount, podCrashLooping } from '@/lib/pod-status'
 import { formatDateTime } from '@/lib/format'
 import { jobStatusLabel, jobStatusVariant } from '@/lib/job-status'
 import { useMetricsHistory } from '@/composables/useMetricsHistory'
+import { useResourceYaml } from '@/composables/useResourceYaml'
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardAction } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
 import { Button } from '@/components/ui/button'
 import { Empty, EmptyHeader, EmptyTitle, EmptyDescription } from '@/components/ui/empty'
 import AggregatedLogsDrawer from '@/components/AggregatedLogsDrawer.vue'
+import ResourceYamlDrawer from '@/components/ResourceYamlDrawer.vue'
 import ResourceUsageCard from '@/components/ResourceUsageCard.vue'
-import { ScrollTextIcon, ContainerIcon } from '@lucide/vue'
+import { CodeIcon, ContainerIcon } from '@lucide/vue'
 
 const props = defineProps<{ resource: any }>()
 
@@ -43,6 +45,9 @@ const logTargets = computed(() =>
 )
 
 const logsOpen = ref(false)
+const { yamlOpen, yaml } = useResourceYaml('jobs', () => props.resource)
+
+defineExpose({ openLogs: () => (logsOpen.value = true) })
 
 function goToPod(pod: any) {
   router.push(`/${store.currentContext}/pods/${pod.metadata.namespace}/${pod.metadata.name}`)
@@ -61,9 +66,9 @@ function podPhaseVariant(phase: string) {
       <CardHeader>
         <CardTitle class="text-sm">{{ $t('describe.job.statusTitle') }}</CardTitle>
         <CardAction>
-          <Button size="sm" @click="logsOpen = true">
-            <ScrollTextIcon data-icon="inline-start" />
-            {{ $t('describe.viewAllLogs') }}
+          <Button size="sm" variant="outline" @click="yamlOpen = true">
+            <CodeIcon data-icon="inline-start" />
+            {{ $t('describe.viewYaml') }}
           </Button>
         </CardAction>
       </CardHeader>
@@ -145,5 +150,6 @@ function podPhaseVariant(phase: string) {
       :description="`Job ${resource.metadata.name}`"
       :pods="logTargets"
     />
+    <ResourceYamlDrawer v-model:open="yamlOpen" :title="resource.metadata.name" :yaml="yaml" />
   </div>
 </template>

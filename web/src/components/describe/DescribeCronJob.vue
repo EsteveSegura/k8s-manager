@@ -5,16 +5,20 @@ import { useClusterStore } from '@/stores/cluster'
 import { jobsForCronJob } from '@/lib/k8s-relations'
 import { formatDateTime } from '@/lib/format'
 import { jobStatusLabel, jobStatusVariant } from '@/lib/job-status'
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card'
+import { useResourceYaml } from '@/composables/useResourceYaml'
+import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardAction } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
 import { Empty, EmptyHeader, EmptyTitle, EmptyDescription } from '@/components/ui/empty'
-import { ListChecksIcon } from '@lucide/vue'
+import ResourceYamlDrawer from '@/components/ResourceYamlDrawer.vue'
+import { ListChecksIcon, CodeIcon } from '@lucide/vue'
 
 const props = defineProps<{ resource: any }>()
 
 const router = useRouter()
 const store = useClusterStore()
+const { yamlOpen, yaml } = useResourceYaml('cronjobs', () => props.resource)
 
 const spec = computed(() => props.resource.spec || {})
 const status = computed(() => props.resource.status || {})
@@ -41,6 +45,12 @@ function goToJob(job: any) {
     <Card>
       <CardHeader>
         <CardTitle class="text-sm">{{ $t('describe.cronjob.scheduleTitle') }}</CardTitle>
+        <CardAction>
+          <Button size="sm" variant="outline" @click="yamlOpen = true">
+            <CodeIcon data-icon="inline-start" />
+            {{ $t('describe.viewYaml') }}
+          </Button>
+        </CardAction>
       </CardHeader>
       <CardContent class="flex flex-wrap items-center gap-4 text-sm">
         <Badge variant="outline" class="font-mono">{{ spec.schedule }}</Badge>
@@ -99,5 +109,7 @@ function goToJob(job: any) {
         </div>
       </CardContent>
     </Card>
+
+    <ResourceYamlDrawer v-model:open="yamlOpen" :title="resource.metadata.name" :yaml="yaml" />
   </div>
 </template>

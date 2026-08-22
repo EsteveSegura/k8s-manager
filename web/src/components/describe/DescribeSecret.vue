@@ -3,15 +3,19 @@ import { computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useClusterStore } from '@/stores/cluster'
 import { podsForSecret } from '@/lib/k8s-relations'
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card'
+import { useResourceYaml } from '@/composables/useResourceYaml'
+import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardAction } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
 import { Empty, EmptyHeader, EmptyTitle, EmptyDescription } from '@/components/ui/empty'
-import { ContainerIcon, LockIcon } from '@lucide/vue'
+import ResourceYamlDrawer from '@/components/ResourceYamlDrawer.vue'
+import { ContainerIcon, LockIcon, CodeIcon } from '@lucide/vue'
 
 const props = defineProps<{ resource: any }>()
 
 const router = useRouter()
 const store = useClusterStore()
+const { yamlOpen, yaml } = useResourceYaml('secrets', () => props.resource)
 
 const relatedPods = computed(() => podsForSecret(props.resource, store.pods))
 
@@ -35,6 +39,12 @@ function podPhaseVariant(phase: string) {
           {{ $t('describe.secret.keysTitle') }}
         </CardTitle>
         <CardDescription>{{ $t('describe.secret.keysDescription') }}</CardDescription>
+        <CardAction>
+          <Button size="sm" variant="outline" @click="yamlOpen = true">
+            <CodeIcon data-icon="inline-start" />
+            {{ $t('describe.viewYaml') }}
+          </Button>
+        </CardAction>
       </CardHeader>
       <CardContent class="flex flex-col gap-3 text-sm">
         <Badge variant="outline">{{ resource.type || 'Opaque' }}</Badge>
@@ -76,5 +86,7 @@ function podPhaseVariant(phase: string) {
         </button>
       </CardContent>
     </Card>
+
+    <ResourceYamlDrawer v-model:open="yamlOpen" :title="resource.metadata.name" :yaml="yaml" />
   </div>
 </template>

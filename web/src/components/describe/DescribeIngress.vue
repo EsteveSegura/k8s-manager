@@ -3,16 +3,20 @@ import { computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useClusterStore } from '@/stores/cluster'
 import { servicesForIngress } from '@/lib/k8s-relations'
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card'
+import { useResourceYaml } from '@/composables/useResourceYaml'
+import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardAction } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Empty, EmptyHeader, EmptyTitle, EmptyDescription } from '@/components/ui/empty'
-import { NetworkIcon } from '@lucide/vue'
+import ResourceYamlDrawer from '@/components/ResourceYamlDrawer.vue'
+import { NetworkIcon, CodeIcon } from '@lucide/vue'
 
 const props = defineProps<{ resource: any }>()
 
 const router = useRouter()
 const store = useClusterStore()
+const { yamlOpen, yaml } = useResourceYaml('ingresses', () => props.resource)
 
 const spec = computed(() => props.resource.spec || {})
 const status = computed(() => props.resource.status || {})
@@ -50,6 +54,12 @@ function goToService(service: any) {
     <Card>
       <CardHeader>
         <CardTitle class="text-sm">{{ $t('describe.ingress.classTitle') }}</CardTitle>
+        <CardAction>
+          <Button size="sm" variant="outline" @click="yamlOpen = true">
+            <CodeIcon data-icon="inline-start" />
+            {{ $t('describe.viewYaml') }}
+          </Button>
+        </CardAction>
       </CardHeader>
       <CardContent class="flex flex-wrap items-center gap-4 text-sm">
         <Badge variant="outline">{{ spec.ingressClassName || '-' }}</Badge>
@@ -139,5 +149,7 @@ function goToService(service: any) {
         </button>
       </CardContent>
     </Card>
+
+    <ResourceYamlDrawer v-model:open="yamlOpen" :title="resource.metadata.name" :yaml="yaml" />
   </div>
 </template>

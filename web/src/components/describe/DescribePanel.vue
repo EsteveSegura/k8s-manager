@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import { useClusterStore } from '@/stores/cluster'
 import type { ResourceKind } from '@/stores/cluster'
 import DescribeDeployment from '@/components/describe/DescribeDeployment.vue'
@@ -38,6 +38,14 @@ const COMPONENT_BY_KIND: Record<ResourceKind, unknown> = {
 }
 
 const activeComponent = computed(() => (store.selectedResource ? COMPONENT_BY_KIND[store.selectedResource.kind] : null))
+
+const activeRef = ref<any>(null)
+
+function openLogs() {
+  activeRef.value?.openLogs?.()
+}
+
+defineExpose({ openLogs })
 </script>
 
 <template>
@@ -54,6 +62,7 @@ const activeComponent = computed(() => (store.selectedResource ? COMPONENT_BY_KI
       <component
         :is="activeComponent"
         v-else
+        ref="activeRef"
         :key="`${store.selectedResource.namespace}/${store.selectedResource.name}`"
         :resource="store.selectedResourceObject"
       />

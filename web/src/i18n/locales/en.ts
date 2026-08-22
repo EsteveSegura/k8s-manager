@@ -74,7 +74,6 @@ export default {
     emptyTitle: 'No resource selected',
     emptyDescription: 'Click a row in the table to see its detail here.',
     viewLogs: 'View logs',
-    viewAllLogs: 'View logs',
     viewYaml: 'View YAML',
     yamlDescription: 'Raw YAML as returned by the Kubernetes API',
     envVarsLabel: 'Env vars:',

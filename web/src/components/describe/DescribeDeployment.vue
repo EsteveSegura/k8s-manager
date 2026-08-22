@@ -5,15 +5,17 @@ import { useClusterStore } from '@/stores/cluster'
 import { servicesForDeployment, podsForDeployment } from '@/lib/k8s-relations'
 import { resourceTotalsForPods } from '@/lib/k8s-usage'
 import { useMetricsHistory } from '@/composables/useMetricsHistory'
+import { useResourceYaml } from '@/composables/useResourceYaml'
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardAction } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
 import { Button } from '@/components/ui/button'
 import { Empty, EmptyHeader, EmptyTitle, EmptyDescription } from '@/components/ui/empty'
 import AggregatedLogsDrawer from '@/components/AggregatedLogsDrawer.vue'
+import ResourceYamlDrawer from '@/components/ResourceYamlDrawer.vue'
 import ResourceUsageCard from '@/components/ResourceUsageCard.vue'
 import ResourceEventsCard from '@/components/ResourceEventsCard.vue'
-import { ScrollTextIcon, NetworkIcon } from '@lucide/vue'
+import { CodeIcon, NetworkIcon } from '@lucide/vue'
 
 const props = defineProps<{ resource: any }>()
 
@@ -42,6 +44,9 @@ const eventMatchers = computed(() => [
 ])
 
 const logsOpen = ref(false)
+const { yamlOpen, yaml } = useResourceYaml('deployments', () => props.resource)
+
+defineExpose({ openLogs: () => (logsOpen.value = true) })
 
 function goToService(service: any) {
   router.push(`/${store.currentContext}/services/${service.metadata.namespace}/${service.metadata.name}`)
@@ -61,9 +66,9 @@ function serviceExposure(service: any) {
         <CardTitle class="text-sm">{{ $t('describe.deployment.replicasTitle') }}</CardTitle>
         <CardDescription>{{ $t('describe.deployment.replicasDescription') }}</CardDescription>
         <CardAction>
-          <Button size="sm" @click="logsOpen = true">
-            <ScrollTextIcon data-icon="inline-start" />
-            {{ $t('describe.viewAllLogs') }}
+          <Button size="sm" variant="outline" @click="yamlOpen = true">
+            <CodeIcon data-icon="inline-start" />
+            {{ $t('describe.viewYaml') }}
           </Button>
         </CardAction>
       </CardHeader>
@@ -156,5 +161,6 @@ function serviceExposure(service: any) {
       :description="`Deployment ${resource.metadata.name}`"
       :pods="logTargets"
     />
+    <ResourceYamlDrawer v-model:open="yamlOpen" :title="resource.metadata.name" :yaml="yaml" />
   </div>
 </template>

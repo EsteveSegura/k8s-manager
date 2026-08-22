@@ -3,16 +3,20 @@ import { computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useClusterStore } from '@/stores/cluster'
 import { podsForConfigMap } from '@/lib/k8s-relations'
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card'
+import { useResourceYaml } from '@/composables/useResourceYaml'
+import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardAction } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
 import { Empty, EmptyHeader, EmptyTitle, EmptyDescription } from '@/components/ui/empty'
-import { ContainerIcon } from '@lucide/vue'
+import ResourceYamlDrawer from '@/components/ResourceYamlDrawer.vue'
+import { ContainerIcon, CodeIcon } from '@lucide/vue'
 
 const props = defineProps<{ resource: any }>()
 
 const router = useRouter()
 const store = useClusterStore()
+const { yamlOpen, yaml } = useResourceYaml('configmaps', () => props.resource)
 
 const dataEntries = computed(() => Object.entries(props.resource.data || {}))
 const binaryDataKeys = computed(() => Object.keys(props.resource.binaryData || {}))
@@ -35,6 +39,12 @@ function podPhaseVariant(phase: string) {
       <CardHeader>
         <CardTitle class="text-sm">{{ $t('describe.configmap.dataTitle') }}</CardTitle>
         <CardDescription>{{ $t('describe.configmap.dataDescription') }}</CardDescription>
+        <CardAction>
+          <Button size="sm" variant="outline" @click="yamlOpen = true">
+            <CodeIcon data-icon="inline-start" />
+            {{ $t('describe.viewYaml') }}
+          </Button>
+        </CardAction>
       </CardHeader>
       <CardContent class="flex flex-col gap-3 text-sm">
         <Empty v-if="dataEntries.length === 0 && binaryDataKeys.length === 0">
@@ -81,5 +91,7 @@ function podPhaseVariant(phase: string) {
         </button>
       </CardContent>
     </Card>
+
+    <ResourceYamlDrawer v-model:open="yamlOpen" :title="resource.metadata.name" :yaml="yaml" />
   </div>
 </template>

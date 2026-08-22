@@ -3,15 +3,19 @@ import { computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useClusterStore } from '@/stores/cluster'
 import { persistentVolumeClaimForVolume } from '@/lib/k8s-relations'
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card'
+import { useResourceYaml } from '@/composables/useResourceYaml'
+import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardAction } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
 import { Empty, EmptyHeader, EmptyTitle, EmptyDescription } from '@/components/ui/empty'
-import { SaveIcon } from '@lucide/vue'
+import ResourceYamlDrawer from '@/components/ResourceYamlDrawer.vue'
+import { SaveIcon, CodeIcon } from '@lucide/vue'
 
 const props = defineProps<{ resource: any }>()
 
 const router = useRouter()
 const store = useClusterStore()
+const { yamlOpen, yaml } = useResourceYaml('persistentvolumes', () => props.resource)
 
 const spec = computed(() => props.resource.spec || {})
 const status = computed(() => props.resource.status || {})
@@ -39,6 +43,12 @@ function goToClaim(pvc: any) {
     <Card>
       <CardHeader>
         <CardTitle class="text-sm">{{ $t('describe.pv.statusTitle') }}</CardTitle>
+        <CardAction>
+          <Button size="sm" variant="outline" @click="yamlOpen = true">
+            <CodeIcon data-icon="inline-start" />
+            {{ $t('describe.viewYaml') }}
+          </Button>
+        </CardAction>
       </CardHeader>
       <CardContent class="flex flex-wrap items-center gap-4 text-sm">
         <Badge :variant="phaseVariant(status.phase)">{{ status.phase || 'Unknown' }}</Badge>
@@ -77,5 +87,7 @@ function goToClaim(pvc: any) {
         </div>
       </CardContent>
     </Card>
+
+    <ResourceYamlDrawer v-model:open="yamlOpen" :title="resource.metadata.name" :yaml="yaml" />
   </div>
 </template>

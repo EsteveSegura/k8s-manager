@@ -7,15 +7,17 @@ import { resourceTotalsForPods } from '@/lib/k8s-usage'
 import { podRestartCount, podCrashLooping } from '@/lib/pod-status'
 import { formatDateTime } from '@/lib/format'
 import { useMetricsHistory } from '@/composables/useMetricsHistory'
+import { useResourceYaml } from '@/composables/useResourceYaml'
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardAction } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Empty, EmptyHeader, EmptyTitle, EmptyDescription } from '@/components/ui/empty'
 import AggregatedLogsDrawer from '@/components/AggregatedLogsDrawer.vue'
+import ResourceYamlDrawer from '@/components/ResourceYamlDrawer.vue'
 import ResourceUsageCard from '@/components/ResourceUsageCard.vue'
 import ResourceEventsCard from '@/components/ResourceEventsCard.vue'
-import { ScrollTextIcon, ContainerIcon } from '@lucide/vue'
+import { CodeIcon, ContainerIcon } from '@lucide/vue'
 
 const props = defineProps<{ resource: any }>()
 
@@ -41,6 +43,9 @@ const eventMatchers = computed(() => [
 ])
 
 const logsOpen = ref(false)
+const { yamlOpen, yaml } = useResourceYaml('services', () => props.resource)
+
+defineExpose({ openLogs: () => (logsOpen.value = true) })
 
 function goToPod(pod: any) {
   router.push(`/${store.currentContext}/pods/${pod.metadata.namespace}/${pod.metadata.name}`)
@@ -60,9 +65,9 @@ function podPhaseVariant(phase: string) {
         <CardTitle class="text-sm">{{ $t('describe.service.networkTitle') }}</CardTitle>
         <CardDescription>{{ $t('describe.service.networkDescription') }}</CardDescription>
         <CardAction>
-          <Button size="sm" @click="logsOpen = true">
-            <ScrollTextIcon data-icon="inline-start" />
-            {{ $t('describe.viewAllLogs') }}
+          <Button size="sm" variant="outline" @click="yamlOpen = true">
+            <CodeIcon data-icon="inline-start" />
+            {{ $t('describe.viewYaml') }}
           </Button>
         </CardAction>
       </CardHeader>
@@ -170,5 +175,6 @@ function podPhaseVariant(phase: string) {
       :description="`Service ${resource.metadata.name}`"
       :pods="logTargets"
     />
+    <ResourceYamlDrawer v-model:open="yamlOpen" :title="resource.metadata.name" :yaml="yaml" />
   </div>
 </template>

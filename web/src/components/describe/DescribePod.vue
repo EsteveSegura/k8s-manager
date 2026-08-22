@@ -6,15 +6,17 @@ import { podRestartCount, podCrashLooping } from '@/lib/pod-status'
 import { formatDateTime } from '@/lib/format'
 import { useMetricsHistory } from '@/composables/useMetricsHistory'
 import { usePodStatusHistory } from '@/composables/usePodStatusHistory'
+import { useResourceYaml } from '@/composables/useResourceYaml'
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardAction } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
 import { Button } from '@/components/ui/button'
 import LogsDrawer from '@/components/LogsDrawer.vue'
+import ResourceYamlDrawer from '@/components/ResourceYamlDrawer.vue'
 import ResourceUsageCard from '@/components/ResourceUsageCard.vue'
 import PodStatusTimeline from '@/components/PodStatusTimeline.vue'
 import ResourceEventsCard from '@/components/ResourceEventsCard.vue'
-import { ScrollTextIcon } from '@lucide/vue'
+import { CodeIcon } from '@lucide/vue'
 
 const props = defineProps<{ resource: any }>()
 
@@ -38,6 +40,9 @@ const statusHistory = usePodStatusHistory(() => ({
 const eventMatchers = computed(() => [{ kind: 'Pod', name: props.resource.metadata.name }])
 
 const logsOpen = ref(false)
+const { yamlOpen, yaml } = useResourceYaml('pods', () => props.resource)
+
+defineExpose({ openLogs: () => (logsOpen.value = true) })
 
 function statusFor(name: string) {
   return containerStatuses.value.find((cs: any) => cs.name === name) || {}
@@ -56,9 +61,9 @@ function phaseVariant(phase: string) {
       <CardHeader>
         <CardTitle class="text-sm">{{ $t('describe.pod.statusTitle') }}</CardTitle>
         <CardAction>
-          <Button size="sm" @click="logsOpen = true">
-            <ScrollTextIcon data-icon="inline-start" />
-            {{ $t('describe.viewLogs') }}
+          <Button size="sm" variant="outline" @click="yamlOpen = true">
+            <CodeIcon data-icon="inline-start" />
+            {{ $t('describe.viewYaml') }}
           </Button>
         </CardAction>
       </CardHeader>
@@ -120,5 +125,6 @@ function phaseVariant(phase: string) {
       :name="resource.metadata.name"
       :containers="containerNames"
     />
+    <ResourceYamlDrawer v-model:open="yamlOpen" :title="resource.metadata.name" :yaml="yaml" />
   </div>
 </template>
