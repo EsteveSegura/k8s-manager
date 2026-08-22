@@ -4,6 +4,8 @@ import { useRouter } from 'vue-router'
 import { useClusterStore } from '@/stores/cluster'
 import { podsForService } from '@/lib/k8s-relations'
 import { resourceTotalsForPods } from '@/lib/k8s-usage'
+import { podRestartCount, podCrashLooping } from '@/lib/pod-status'
+import { formatDateTime } from '@/lib/format'
 import { useMetricsHistory } from '@/composables/useMetricsHistory'
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -12,6 +14,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Empty, EmptyHeader, EmptyTitle, EmptyDescription } from '@/components/ui/empty'
 import AggregatedLogsDrawer from '@/components/AggregatedLogsDrawer.vue'
 import ResourceUsageCard from '@/components/ResourceUsageCard.vue'
+import ResourceEventsCard from '@/components/ResourceEventsCard.vue'
 import { ScrollTextIcon, ContainerIcon } from '@lucide/vue'
 
 const props = defineProps<{ resource: any }>()
@@ -32,6 +35,10 @@ const logTargets = computed(() =>
     containers: (pod.spec?.containers || []).map((c: any) => c.name),
   })),
 )
+const eventMatchers = computed(() => [
+  { kind: 'Service', name: props.resource.metadata.name },
+  ...relatedPods.value.map((pod: any) => ({ kind: 'Pod', name: pod.metadata.name })),
+])
 
 const logsOpen = ref(false)
 
@@ -142,17 +149,25 @@ function podPhaseVariant(phase: string) {
           v-for="pod in relatedPods"
           :key="pod.metadata.name"
           type="button"
-          class="flex min-w-0 items-center justify-between gap-2 rounded-md border p-2 text-left transition-colors hover:bg-accent"
+          class="@container flex min-w-0 items-center justify-between gap-2 rounded-md border p-2 text-left transition-colors hover:bg-accent"
           @click="goToPod(pod)"
         >
           <div class="flex min-w-0 items-center gap-2">
             <ContainerIcon class="text-muted-foreground shrink-0" />
             <span class="truncate font-medium">{{ pod.metadata.name }}</span>
           </div>
-          <Badge :variant="podPhaseVariant(pod.status?.phase)" class="shrink-0">{{ pod.status?.phase || 'Unknown' }}</Badge>
+          <div class="flex shrink-0 items-center gap-2">
+            <Badge variant="outline" class="hidden @md:inline-flex whitespace-nowrap">{{ formatDateTime(pod.metadata?.creationTimestamp) }}</Badge>
+            <Badge :variant="podCrashLooping(pod) ? 'destructive' : podRestartCount(pod) > 0 ? 'secondary' : 'outline'" class="hidden @sm:inline-flex">
+              {{ $t('describe.pod.restartsBadge', { count: podRestartCount(pod) }) }}
+            </Badge>
+            <Badge :variant="podPhaseVariant(pod.status?.phase)">{{ pod.status?.phase || 'Unknown' }}</Badge>
+          </div>
         </button>
       </CardContent>
     </Card>
+
+    <ResourceEventsCard :namespace="resource.metadata.namespace" :matchers="eventMatchers" />
 
     <AggregatedLogsDrawer
       v-model:open="logsOpen"

@@ -16,7 +16,11 @@ import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Empty, EmptyHeader, EmptyTitle, EmptyDescription, EmptyMedia } from '@/components/ui/empty'
 import { Separator } from '@/components/ui/separator'
-import { InboxIcon, RefreshCwIcon, XIcon, ArrowLeftIcon } from '@lucide/vue'
+import { InboxIcon, RefreshCwIcon, XIcon, ArrowLeftIcon, ShieldAlertIcon } from '@lucide/vue'
+import { formatDateTime } from '@/lib/format'
+import { jobStatusLabel, jobStatusVariant } from '@/lib/job-status'
+import { resourcePath } from '@/lib/resource-kinds'
+import { parseCpu, parseMemory, formatCpu, formatMemory, percentOf } from '@/lib/k8s-quantities'
 import type { ResourceKind } from '@/stores/cluster'
 
 const props = defineProps<{ kind: ResourceKind }>()
@@ -45,6 +49,7 @@ async function ensureLoaded() {
     // el error se muestra vía store.resourcesError
   }
   store.loadMetrics(context.value)
+  store.loadNodeMetrics(context.value)
 }
 
 async function refreshNow() {
@@ -54,6 +59,7 @@ async function refreshNow() {
     // el error se muestra vía store.resourcesError
   }
   store.loadMetrics(context.value, { force: true })
+  store.loadNodeMetrics(context.value, { force: true })
 }
 
 const { pause: pauseAutoRefresh, resume: resumeAutoRefresh } = useIntervalFn(refreshNow, () => settings.refreshIntervalMs, {
@@ -88,12 +94,14 @@ watch(
 )
 
 const items = computed(() => store.resourcesByKind(props.kind))
+const permissionError = computed(() => store.resourceErrors[props.kind] || null)
 
 const filteredItems = computed(() => {
   const text = filterText.value.trim().toLowerCase()
   if (!text) return items.value
   return items.value.filter((item: any) => {
-    const haystack = `${item.metadata?.namespace}/${item.metadata?.name}`.toLowerCase()
+    const namespace = item.metadata?.namespace
+    const haystack = `${namespace ? namespace + '/' : ''}${item.metadata?.name}`.toLowerCase()
     return haystack.includes(text)
   })
 })
@@ -101,19 +109,40 @@ const filteredItems = computed(() => {
 function isSelected(item: any) {
   return (
     store.selectedResource?.kind === props.kind &&
-    store.selectedResource?.namespace === item.metadata?.namespace &&
-    store.selectedResource?.name === item.metadata?.name
+    store.selectedResource?.name === item.metadata?.name &&
+    (item.metadata?.namespace == null || store.selectedResource?.namespace === item.metadata?.namespace)
   )
 }
 
 function selectRow(item: any) {
-  router.push(`/${context.value}/${props.kind}/${item.metadata.namespace}/${item.metadata.name}`)
+  router.push(resourcePath(context.value, props.kind, item.metadata.namespace, item.metadata.name))
 }
 
-function deploymentReady(item: any) {
+function readyReplicasLabel(item: any) {
   const ready = item.status?.readyReplicas || 0
   const desired = item.spec?.replicas ?? 0
   return `${ready}/${desired}`
+}
+
+function daemonSetReadyLabel(item: any) {
+  const ready = item.status?.numberReady || 0
+  const desired = item.status?.desiredNumberScheduled || 0
+  return `${ready}/${desired}`
+}
+
+function jobCompletionsLabel(item: any) {
+  const succeeded = item.status?.succeeded || 0
+  const completions = item.spec?.completions ?? 1
+  return `${succeeded}/${completions}`
+}
+
+function cronJobLastScheduleLabel(item: any) {
+  return formatDateTime(item.status?.lastScheduleTime) || '-'
+}
+
+function ingressHostsLabel(item: any) {
+  const hosts = (item.spec?.rules || []).map((rule: any) => rule.host || '*')
+  return hosts.length ? hosts.join(', ') : '-'
 }
 
 function podPhase(item: any) {
@@ -130,6 +159,58 @@ function serviceExposure(item: any) {
   const type = item.spec?.type || 'ClusterIP'
   const ports = (item.spec?.ports || []).map((p: any) => p.port).join(', ')
   return { type, ports }
+}
+
+function configMapKeysCount(item: any) {
+  return Object.keys(item.data || {}).length + Object.keys(item.binaryData || {}).length
+}
+
+function pvcPhaseVariant(phase: string) {
+  if (phase === 'Bound') return 'secondary'
+  if (phase === 'Pending') return 'outline'
+  return 'destructive'
+}
+
+function pvPhaseVariant(phase: string) {
+  if (phase === 'Bound' || phase === 'Available') return 'secondary'
+  if (phase === 'Released') return 'outline'
+  return 'destructive'
+}
+
+function nodeReadyVariant(item: any) {
+  const ready = (item.status?.conditions || []).find((c: any) => c.type === 'Ready')
+  return ready?.status === 'True' ? 'secondary' : 'destructive'
+}
+
+function nodeRoles(item: any) {
+  const labels = item.metadata?.labels || {}
+  const roles = Object.keys(labels)
+    .filter((key) => key.startsWith('node-role.kubernetes.io/'))
+    .map((key) => key.replace('node-role.kubernetes.io/', ''))
+  return roles.length ? roles.join(', ') : '-'
+}
+
+function nodePodCount(item: any) {
+  const nodeName = item.metadata?.name
+  return store.pods.filter((pod: any) => pod.spec?.nodeName === nodeName).length
+}
+
+function nodeCpuLabel(item: any) {
+  const metric = store.nodeMetrics[item.metadata?.name]
+  if (!metric) return '-'
+  const usage = parseCpu(metric.usage?.cpu)
+  const allocatable = parseCpu(item.status?.allocatable?.cpu)
+  const percent = percentOf(usage, allocatable)
+  return percent === null ? formatCpu(usage) : `${formatCpu(usage)} (${percent}%)`
+}
+
+function nodeMemoryLabel(item: any) {
+  const metric = store.nodeMetrics[item.metadata?.name]
+  if (!metric) return '-'
+  const usage = parseMemory(metric.usage?.memory)
+  const allocatable = parseMemory(item.status?.allocatable?.memory)
+  const percent = percentOf(usage, allocatable)
+  return percent === null ? formatMemory(usage) : `${formatMemory(usage)} (${percent}%)`
 }
 </script>
 
@@ -187,6 +268,14 @@ function serviceExposure(item: any) {
                 </EmptyHeader>
               </Empty>
 
+              <Empty v-else-if="permissionError">
+                <EmptyHeader>
+                  <EmptyMedia variant="icon"><ShieldAlertIcon /></EmptyMedia>
+                  <EmptyTitle>{{ $t('resourceList.permissionErrorTitle') }}</EmptyTitle>
+                  <EmptyDescription>{{ permissionError }}</EmptyDescription>
+                </EmptyHeader>
+              </Empty>
+
               <Empty v-else-if="filteredItems.length === 0">
                 <EmptyHeader>
                   <EmptyMedia variant="icon"><InboxIcon /></EmptyMedia>
@@ -200,11 +289,34 @@ function serviceExposure(item: any) {
                   <TableRow>
                     <TableHead>Namespace</TableHead>
                     <TableHead>{{ $t('resourceList.columns.name') }}</TableHead>
-                    <TableHead v-if="kind === 'deployments'">{{ $t('resourceList.columns.replicas') }}</TableHead>
+                    <TableHead v-if="kind === 'deployments' || kind === 'statefulsets'">{{ $t('resourceList.columns.replicas') }}</TableHead>
+                    <TableHead v-if="kind === 'daemonsets'">{{ $t('resourceList.columns.ready') }}</TableHead>
+                    <TableHead v-if="kind === 'jobs'">{{ $t('resourceList.columns.completions') }}</TableHead>
+                    <TableHead v-if="kind === 'jobs'">{{ $t('resourceList.columns.status') }}</TableHead>
+                    <TableHead v-if="kind === 'cronjobs'">{{ $t('resourceList.columns.schedule') }}</TableHead>
+                    <TableHead v-if="kind === 'cronjobs'">{{ $t('resourceList.columns.suspended') }}</TableHead>
+                    <TableHead v-if="kind === 'cronjobs'">{{ $t('resourceList.columns.lastSchedule') }}</TableHead>
                     <TableHead v-if="kind === 'services'">{{ $t('resourceList.columns.type') }}</TableHead>
                     <TableHead v-if="kind === 'services'">{{ $t('resourceList.columns.ports') }}</TableHead>
+                    <TableHead v-if="kind === 'ingresses'">{{ $t('resourceList.columns.hosts') }}</TableHead>
+                    <TableHead v-if="kind === 'ingresses'">{{ $t('resourceList.columns.class') }}</TableHead>
                     <TableHead v-if="kind === 'pods'">{{ $t('resourceList.columns.status') }}</TableHead>
                     <TableHead v-if="kind === 'pods'">{{ $t('resourceList.columns.node') }}</TableHead>
+                    <TableHead v-if="kind === 'pods'">{{ $t('resourceList.columns.created') }}</TableHead>
+                    <TableHead v-if="kind === 'configmaps'">{{ $t('resourceList.columns.keys') }}</TableHead>
+                    <TableHead v-if="kind === 'secrets'">{{ $t('resourceList.columns.type') }}</TableHead>
+                    <TableHead v-if="kind === 'secrets'">{{ $t('resourceList.columns.keys') }}</TableHead>
+                    <TableHead v-if="kind === 'persistentvolumeclaims'">{{ $t('resourceList.columns.status') }}</TableHead>
+                    <TableHead v-if="kind === 'persistentvolumeclaims'">{{ $t('resourceList.columns.capacity') }}</TableHead>
+                    <TableHead v-if="kind === 'persistentvolumeclaims'">{{ $t('resourceList.columns.storageClass') }}</TableHead>
+                    <TableHead v-if="kind === 'persistentvolumes'">{{ $t('resourceList.columns.status') }}</TableHead>
+                    <TableHead v-if="kind === 'persistentvolumes'">{{ $t('resourceList.columns.capacity') }}</TableHead>
+                    <TableHead v-if="kind === 'persistentvolumes'">{{ $t('resourceList.columns.storageClass') }}</TableHead>
+                    <TableHead v-if="kind === 'nodes'">{{ $t('resourceList.columns.status') }}</TableHead>
+                    <TableHead v-if="kind === 'nodes'">{{ $t('resourceList.columns.roles') }}</TableHead>
+                    <TableHead v-if="kind === 'nodes'">CPU</TableHead>
+                    <TableHead v-if="kind === 'nodes'">{{ $t('usage.memory') }}</TableHead>
+                    <TableHead v-if="kind === 'nodes'">{{ $t('resourceList.columns.pods') }}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -215,15 +327,50 @@ function serviceExposure(item: any) {
                     :data-state="isSelected(item) ? 'selected' : undefined"
                     @click="selectRow(item)"
                   >
-                    <TableCell class="text-muted-foreground">{{ item.metadata.namespace }}</TableCell>
+                    <TableCell class="text-muted-foreground">{{ item.metadata.namespace || '-' }}</TableCell>
                     <TableCell class="font-medium">{{ item.metadata.name }}</TableCell>
-                    <TableCell v-if="kind === 'deployments'">{{ deploymentReady(item) }}</TableCell>
+                    <TableCell v-if="kind === 'deployments' || kind === 'statefulsets'">{{ readyReplicasLabel(item) }}</TableCell>
+                    <TableCell v-if="kind === 'daemonsets'">{{ daemonSetReadyLabel(item) }}</TableCell>
+                    <TableCell v-if="kind === 'jobs'">{{ jobCompletionsLabel(item) }}</TableCell>
+                    <TableCell v-if="kind === 'jobs'">
+                      <Badge :variant="jobStatusVariant(jobStatusLabel(item))">{{ jobStatusLabel(item) }}</Badge>
+                    </TableCell>
+                    <TableCell v-if="kind === 'cronjobs'" class="font-mono text-xs">{{ item.spec?.schedule }}</TableCell>
+                    <TableCell v-if="kind === 'cronjobs'">
+                      <Badge :variant="item.spec?.suspend ? 'destructive' : 'secondary'">
+                        {{ item.spec?.suspend ? $t('describe.cronjob.suspended') : $t('describe.cronjob.active') }}
+                      </Badge>
+                    </TableCell>
+                    <TableCell v-if="kind === 'cronjobs'" class="text-muted-foreground">{{ cronJobLastScheduleLabel(item) }}</TableCell>
                     <TableCell v-if="kind === 'services'">{{ serviceExposure(item).type }}</TableCell>
                     <TableCell v-if="kind === 'services'">{{ serviceExposure(item).ports }}</TableCell>
+                    <TableCell v-if="kind === 'ingresses'" class="text-muted-foreground">{{ ingressHostsLabel(item) }}</TableCell>
+                    <TableCell v-if="kind === 'ingresses'">{{ item.spec?.ingressClassName || '-' }}</TableCell>
                     <TableCell v-if="kind === 'pods'">
                       <Badge :variant="podPhaseVariant(podPhase(item))">{{ podPhase(item) }}</Badge>
                     </TableCell>
                     <TableCell v-if="kind === 'pods'" class="text-muted-foreground">{{ item.spec?.nodeName }}</TableCell>
+                    <TableCell v-if="kind === 'pods'" class="text-muted-foreground whitespace-nowrap">{{ formatDateTime(item.metadata?.creationTimestamp) || '-' }}</TableCell>
+                    <TableCell v-if="kind === 'configmaps'">{{ configMapKeysCount(item) }}</TableCell>
+                    <TableCell v-if="kind === 'secrets'" class="font-mono text-xs">{{ item.type || 'Opaque' }}</TableCell>
+                    <TableCell v-if="kind === 'secrets'">{{ item.dataKeys?.length || 0 }}</TableCell>
+                    <TableCell v-if="kind === 'persistentvolumeclaims'">
+                      <Badge :variant="pvcPhaseVariant(item.status?.phase)">{{ item.status?.phase || 'Unknown' }}</Badge>
+                    </TableCell>
+                    <TableCell v-if="kind === 'persistentvolumeclaims'">{{ item.status?.capacity?.storage || '-' }}</TableCell>
+                    <TableCell v-if="kind === 'persistentvolumeclaims'" class="text-muted-foreground">{{ item.spec?.storageClassName || '-' }}</TableCell>
+                    <TableCell v-if="kind === 'persistentvolumes'">
+                      <Badge :variant="pvPhaseVariant(item.status?.phase)">{{ item.status?.phase || 'Unknown' }}</Badge>
+                    </TableCell>
+                    <TableCell v-if="kind === 'persistentvolumes'">{{ item.spec?.capacity?.storage || '-' }}</TableCell>
+                    <TableCell v-if="kind === 'persistentvolumes'" class="text-muted-foreground">{{ item.spec?.storageClassName || '-' }}</TableCell>
+                    <TableCell v-if="kind === 'nodes'">
+                      <Badge :variant="nodeReadyVariant(item)">{{ nodeReadyVariant(item) === 'secondary' ? 'Ready' : 'NotReady' }}</Badge>
+                    </TableCell>
+                    <TableCell v-if="kind === 'nodes'" class="text-muted-foreground">{{ nodeRoles(item) }}</TableCell>
+                    <TableCell v-if="kind === 'nodes'" class="text-muted-foreground">{{ nodeCpuLabel(item) }}</TableCell>
+                    <TableCell v-if="kind === 'nodes'" class="text-muted-foreground">{{ nodeMemoryLabel(item) }}</TableCell>
+                    <TableCell v-if="kind === 'nodes'">{{ nodePodCount(item) }}</TableCell>
                   </TableRow>
                 </TableBody>
               </Table>

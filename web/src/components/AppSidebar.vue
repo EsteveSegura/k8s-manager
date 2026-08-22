@@ -2,6 +2,7 @@
 import { computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useClusterStore } from '@/stores/cluster'
+import type { ResourceKind } from '@/stores/cluster'
 import {
   Sidebar,
   SidebarContent,
@@ -17,7 +18,25 @@ import {
 } from '@/components/ui/sidebar'
 import { Badge } from '@/components/ui/badge'
 import { useSettingsDialog } from '@/composables/useSettingsDialog'
-import { BoxesIcon, NetworkIcon, ContainerIcon, SettingsIcon } from '@lucide/vue'
+import {
+  BoxesIcon,
+  NetworkIcon,
+  ContainerIcon,
+  SettingsIcon,
+  DatabaseIcon,
+  LayersIcon,
+  ListChecksIcon,
+  CalendarClockIcon,
+  RouteIcon,
+  FileTextIcon,
+  KeyRoundIcon,
+  SaveIcon,
+  HardDriveIcon,
+  ServerIcon,
+  PuzzleIcon,
+  ShipWheelIcon,
+  ActivityIcon,
+} from '@lucide/vue'
 
 const store = useClusterStore()
 const route = useRoute()
@@ -26,13 +45,43 @@ const settingsDialog = useSettingsDialog()
 
 const context = computed(() => String(route.params.context || ''))
 
-const navItems = [
-  { kind: 'deployments', label: 'Deployments', icon: BoxesIcon },
-  { kind: 'services', label: 'Services', icon: NetworkIcon },
-  { kind: 'pods', label: 'Pods', icon: ContainerIcon },
-] as const
+interface NavItem {
+  kind: ResourceKind
+  label: string
+  icon: typeof BoxesIcon
+}
 
-function countFor(kind: 'deployments' | 'services' | 'pods') {
+const navGroups: { label: string; items: NavItem[] }[] = [
+  {
+    label: 'sidebar.workloads',
+    items: [
+      { kind: 'deployments', label: 'Deployments', icon: BoxesIcon },
+      { kind: 'statefulsets', label: 'StatefulSets', icon: DatabaseIcon },
+      { kind: 'daemonsets', label: 'DaemonSets', icon: LayersIcon },
+      { kind: 'jobs', label: 'Jobs', icon: ListChecksIcon },
+      { kind: 'cronjobs', label: 'CronJobs', icon: CalendarClockIcon },
+      { kind: 'pods', label: 'Pods', icon: ContainerIcon },
+    ],
+  },
+  {
+    label: 'sidebar.network',
+    items: [
+      { kind: 'services', label: 'Services', icon: NetworkIcon },
+      { kind: 'ingresses', label: 'Ingress', icon: RouteIcon },
+    ],
+  },
+  {
+    label: 'sidebar.configAndStorage',
+    items: [
+      { kind: 'configmaps', label: 'ConfigMaps', icon: FileTextIcon },
+      { kind: 'secrets', label: 'Secrets', icon: KeyRoundIcon },
+      { kind: 'persistentvolumeclaims', label: 'PersistentVolumeClaims', icon: SaveIcon },
+      { kind: 'persistentvolumes', label: 'PersistentVolumes', icon: HardDriveIcon },
+    ],
+  },
+]
+
+function countFor(kind: ResourceKind) {
   return store.resourcesByKind(kind).length
 }
 
@@ -54,11 +103,11 @@ function goTo(kind: string) {
     </SidebarHeader>
 
     <SidebarContent>
-      <SidebarGroup>
-        <SidebarGroupLabel>{{ $t('sidebar.resources') }}</SidebarGroupLabel>
+      <SidebarGroup v-for="group in navGroups" :key="group.label">
+        <SidebarGroupLabel>{{ $t(group.label) }}</SidebarGroupLabel>
         <SidebarGroupContent>
           <SidebarMenu>
-            <SidebarMenuItem v-for="item in navItems" :key="item.kind">
+            <SidebarMenuItem v-for="item in group.items" :key="item.kind">
               <SidebarMenuButton
                 :is-active="route.name === item.kind || route.params.kind === item.kind"
                 :tooltip="item.label"
@@ -70,6 +119,49 @@ function goTo(kind: string) {
               <Badge variant="secondary" class="absolute right-2 top-1.5 group-data-[collapsible=icon]:hidden">
                 {{ countFor(item.kind) }}
               </Badge>
+            </SidebarMenuItem>
+          </SidebarMenu>
+        </SidebarGroupContent>
+      </SidebarGroup>
+
+      <SidebarGroup>
+        <SidebarGroupLabel>{{ $t('sidebar.cluster') }}</SidebarGroupLabel>
+        <SidebarGroupContent>
+          <SidebarMenu>
+            <SidebarMenuItem>
+              <SidebarMenuButton :is-active="route.name === 'nodes' || route.params.kind === 'nodes'" tooltip="Nodes" @click="goTo('nodes')">
+                <ServerIcon />
+                <span>Nodes</span>
+              </SidebarMenuButton>
+              <Badge variant="secondary" class="absolute right-2 top-1.5 group-data-[collapsible=icon]:hidden">
+                {{ countFor('nodes') }}
+              </Badge>
+            </SidebarMenuItem>
+            <SidebarMenuItem>
+              <SidebarMenuButton :is-active="route.name === 'events'" :tooltip="$t('events.title')" @click="router.push(`/${context}/events`)">
+                <ActivityIcon />
+                <span>{{ $t('events.title') }}</span>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          </SidebarMenu>
+        </SidebarGroupContent>
+      </SidebarGroup>
+
+      <SidebarGroup>
+        <SidebarGroupLabel>{{ $t('sidebar.extensions') }}</SidebarGroupLabel>
+        <SidebarGroupContent>
+          <SidebarMenu>
+            <SidebarMenuItem>
+              <SidebarMenuButton :is-active="route.name === 'crds'" tooltip="CRDs" @click="router.push(`/${context}/crds`)">
+                <PuzzleIcon />
+                <span>CRDs</span>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+            <SidebarMenuItem>
+              <SidebarMenuButton :is-active="route.name === 'helm'" tooltip="Helm" @click="router.push(`/${context}/helm`)">
+                <ShipWheelIcon />
+                <span>Helm</span>
+              </SidebarMenuButton>
             </SidebarMenuItem>
           </SidebarMenu>
         </SidebarGroupContent>

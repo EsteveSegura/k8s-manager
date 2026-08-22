@@ -19,8 +19,36 @@ const route = useRoute()
 const router = useRouter()
 const store = useClusterStore()
 
-const KIND_SHORT: Record<string, string> = { deployments: 'deploy', services: 'svc', pods: 'po' }
-const KIND_LABEL: Record<string, string> = { deployments: 'Deployments', services: 'Services', pods: 'Pods' }
+const KIND_SHORT: Record<string, string> = {
+  deployments: 'deploy',
+  services: 'svc',
+  pods: 'po',
+  statefulsets: 'sts',
+  daemonsets: 'ds',
+  jobs: 'job',
+  cronjobs: 'cj',
+  ingresses: 'ing',
+  configmaps: 'cm',
+  secrets: 'secret',
+  persistentvolumeclaims: 'pvc',
+  persistentvolumes: 'pv',
+  nodes: 'node',
+}
+const KIND_LABEL: Record<string, string> = {
+  deployments: 'Deployments',
+  services: 'Services',
+  pods: 'Pods',
+  statefulsets: 'StatefulSets',
+  daemonsets: 'DaemonSets',
+  jobs: 'Jobs',
+  cronjobs: 'CronJobs',
+  ingresses: 'Ingress',
+  configmaps: 'ConfigMaps',
+  secrets: 'Secrets',
+  persistentvolumeclaims: 'PersistentVolumeClaims',
+  persistentvolumes: 'PersistentVolumes',
+  nodes: 'Nodes',
+}
 
 const context = computed(() => String(route.params.context || ''))
 const kind = computed(() => String(route.params.kind || route.name || ''))

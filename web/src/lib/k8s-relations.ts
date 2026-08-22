@@ -49,3 +49,117 @@ export function deploymentsForService(service: any, deployments: any[]) {
       matchesSelector(deployment.spec?.template?.metadata?.labels, selector),
   )
 }
+
+export function podsForStatefulSet(statefulSet: any, pods: any[]) {
+  return podsForSelector(statefulSet.metadata?.namespace, statefulSet.spec?.selector?.matchLabels, pods)
+}
+
+export function podsForDaemonSet(daemonSet: any, pods: any[]) {
+  return podsForSelector(daemonSet.metadata?.namespace, daemonSet.spec?.selector?.matchLabels, pods)
+}
+
+export function podsForJob(job: any, pods: any[]) {
+  return podsForSelector(job.metadata?.namespace, job.spec?.selector?.matchLabels, pods)
+}
+
+export function jobsForCronJob(cronJob: any, jobs: any[]) {
+  const namespace = cronJob.metadata?.namespace
+  const uid = cronJob.metadata?.uid
+  return jobs.filter(
+    (job) => job.metadata?.namespace === namespace && (job.metadata?.ownerReferences || []).some((ref: any) => ref.uid === uid),
+  )
+}
+
+function referencedConfigMapNames(pod: any): Set<string> {
+  const names = new Set<string>()
+  for (const volume of pod.spec?.volumes || []) {
+    if (volume.configMap?.name) names.add(volume.configMap.name)
+  }
+  const containers = [...(pod.spec?.containers || []), ...(pod.spec?.initContainers || [])]
+  for (const container of containers) {
+    for (const envFrom of container.envFrom || []) {
+      if (envFrom.configMapRef?.name) names.add(envFrom.configMapRef.name)
+    }
+    for (const env of container.env || []) {
+      if (env.valueFrom?.configMapKeyRef?.name) names.add(env.valueFrom.configMapKeyRef.name)
+    }
+  }
+  return names
+}
+
+function referencedSecretNames(pod: any): Set<string> {
+  const names = new Set<string>()
+  for (const volume of pod.spec?.volumes || []) {
+    if (volume.secret?.secretName) names.add(volume.secret.secretName)
+  }
+  for (const pullSecret of pod.spec?.imagePullSecrets || []) {
+    if (pullSecret.name) names.add(pullSecret.name)
+  }
+  const containers = [...(pod.spec?.containers || []), ...(pod.spec?.initContainers || [])]
+  for (const container of containers) {
+    for (const envFrom of container.envFrom || []) {
+      if (envFrom.secretRef?.name) names.add(envFrom.secretRef.name)
+    }
+    for (const env of container.env || []) {
+      if (env.valueFrom?.secretKeyRef?.name) names.add(env.valueFrom.secretKeyRef.name)
+    }
+  }
+  return names
+}
+
+export function podsForConfigMap(configMap: any, pods: any[]) {
+  const namespace = configMap.metadata?.namespace
+  const name = configMap.metadata?.name
+  return pods.filter((pod) => pod.metadata?.namespace === namespace && referencedConfigMapNames(pod).has(name))
+}
+
+export function podsForSecret(secret: any, pods: any[]) {
+  const namespace = secret.metadata?.namespace
+  const name = secret.metadata?.name
+  return pods.filter((pod) => pod.metadata?.namespace === namespace && referencedSecretNames(pod).has(name))
+}
+
+export function podsForPersistentVolumeClaim(pvc: any, pods: any[]) {
+  const namespace = pvc.metadata?.namespace
+  const name = pvc.metadata?.name
+  return pods.filter(
+    (pod) =>
+      pod.metadata?.namespace === namespace &&
+      (pod.spec?.volumes || []).some((volume: any) => volume.persistentVolumeClaim?.claimName === name),
+  )
+}
+
+export function podsForNode(node: any, pods: any[]) {
+  const nodeName = node.metadata?.name
+  return pods.filter((pod) => pod.spec?.nodeName === nodeName)
+}
+
+export function persistentVolumeForClaim(pvc: any, persistentVolumes: any[]) {
+  const volumeName = pvc.spec?.volumeName
+  if (!volumeName) return null
+  return persistentVolumes.find((pv) => pv.metadata?.name === volumeName) || null
+}
+
+export function persistentVolumeClaimForVolume(pv: any, persistentVolumeClaims: any[]) {
+  const claimRef = pv.spec?.claimRef
+  if (!claimRef) return null
+  return (
+    persistentVolumeClaims.find(
+      (pvc) => pvc.metadata?.namespace === claimRef.namespace && pvc.metadata?.name === claimRef.name,
+    ) || null
+  )
+}
+
+export function servicesForIngress(ingress: any, services: any[]) {
+  const namespace = ingress.metadata?.namespace
+  const backendNames = new Set<string>()
+  for (const rule of ingress.spec?.rules || []) {
+    for (const path of rule.http?.paths || []) {
+      const name = path.backend?.service?.name
+      if (name) backendNames.add(name)
+    }
+  }
+  const defaultBackendName = ingress.spec?.defaultBackend?.service?.name
+  if (defaultBackendName) backendNames.add(defaultBackendName)
+  return services.filter((service) => service.metadata?.namespace === namespace && backendNames.has(service.metadata?.name))
+}

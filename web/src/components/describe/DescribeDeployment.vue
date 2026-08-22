@@ -12,6 +12,7 @@ import { Button } from '@/components/ui/button'
 import { Empty, EmptyHeader, EmptyTitle, EmptyDescription } from '@/components/ui/empty'
 import AggregatedLogsDrawer from '@/components/AggregatedLogsDrawer.vue'
 import ResourceUsageCard from '@/components/ResourceUsageCard.vue'
+import ResourceEventsCard from '@/components/ResourceEventsCard.vue'
 import { ScrollTextIcon, NetworkIcon } from '@lucide/vue'
 
 const props = defineProps<{ resource: any }>()
@@ -35,6 +36,10 @@ const logTargets = computed(() =>
     containers: (pod.spec?.containers || []).map((c: any) => c.name),
   })),
 )
+const eventMatchers = computed(() => [
+  { kind: 'Deployment', name: props.resource.metadata.name },
+  ...relatedPods.value.map((pod: any) => ({ kind: 'Pod', name: pod.metadata.name })),
+])
 
 const logsOpen = ref(false)
 
@@ -147,6 +152,8 @@ function serviceExposure(service: any) {
         </div>
       </CardContent>
     </Card>
+
+    <ResourceEventsCard :namespace="resource.metadata.namespace" :matchers="eventMatchers" />
 
     <AggregatedLogsDrawer
       v-model:open="logsOpen"
