@@ -12,8 +12,6 @@ import {
   DrawerHeader,
   DrawerTitle,
   DrawerDescription,
-  DrawerFooter,
-  DrawerClose,
 } from '@/components/ui/drawer'
 import { Button } from '@/components/ui/button'
 import { InputGroup, InputGroupInput, InputGroupAddon, InputGroupButton } from '@/components/ui/input-group'
@@ -264,12 +262,6 @@ const {
           </div>
         </template>
       </div>
-
-      <DrawerFooter class="shrink-0">
-        <DrawerClose as-child>
-          <Button variant="outline">{{ $t('common.close') }}</Button>
-        </DrawerClose>
-      </DrawerFooter>
     </DrawerContent>
   </Drawer>
 </template>

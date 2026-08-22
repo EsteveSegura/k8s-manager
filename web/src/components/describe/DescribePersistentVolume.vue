@@ -36,10 +36,6 @@ function goToClaim(pvc: any) {
 
 <template>
   <div class="flex flex-col gap-4">
-    <div>
-      <h2 class="text-lg font-semibold">{{ resource.metadata.name }}</h2>
-    </div>
-
     <Card>
       <CardHeader>
         <CardTitle class="text-sm">{{ $t('describe.pv.statusTitle') }}</CardTitle>

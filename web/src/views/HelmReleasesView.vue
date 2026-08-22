@@ -16,7 +16,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { Empty, EmptyHeader, EmptyTitle, EmptyDescription, EmptyMedia } from '@/components/ui/empty'
 import { Separator } from '@/components/ui/separator'
 import { ScrollArea } from '@/components/ui/scroll-area'
-import { InboxIcon, ArrowLeftIcon, XIcon, ShipWheelIcon, RefreshCwIcon } from '@lucide/vue'
+import { InboxIcon, ArrowLeftIcon, XIcon, RefreshCwIcon } from '@lucide/vue'
 
 interface HelmResourceRef {
   kind: string
@@ -92,6 +92,10 @@ function isSelected(release: HelmRelease) {
   return selectedRelease.value?.namespace === release.namespace && selectedRelease.value?.name === release.name
 }
 
+function closeReleasePanel() {
+  selectedRelease.value = null
+}
+
 function statusVariant(value: string) {
   if (value === 'deployed') return 'secondary'
   if (value === 'failed') return 'destructive'
@@ -148,7 +152,7 @@ function goToResource(resourceRef: HelmResourceRef) {
         </div>
 
         <ResizablePanelGroup direction="horizontal" class="flex-1 rounded-lg border min-h-0">
-          <ResizablePanel :default-size="60" :min-size="30" class="min-w-0">
+          <ResizablePanel :default-size="selectedRelease ? 60 : 100" :min-size="30" class="min-w-0">
             <div class="h-full min-w-0 overflow-auto">
               <template v-if="status === 'loading'">
                 <div class="flex flex-col gap-2 p-4">
@@ -202,24 +206,19 @@ function goToResource(resourceRef: HelmResourceRef) {
             </div>
           </ResizablePanel>
 
-          <ResizableHandle with-handle />
+          <template v-if="selectedRelease">
+            <ResizableHandle with-handle />
 
-          <ResizablePanel :default-size="40" :min-size="25" class="min-w-0">
-            <ScrollArea class="h-full">
-              <div class="p-4">
-                <Empty v-if="!selectedRelease">
-                  <EmptyHeader>
-                    <EmptyMedia variant="icon"><ShipWheelIcon /></EmptyMedia>
-                    <EmptyTitle>{{ $t('helm.emptyTitle') }}</EmptyTitle>
-                    <EmptyDescription>{{ $t('helm.emptyDescription') }}</EmptyDescription>
-                  </EmptyHeader>
-                </Empty>
-
-                <div v-else class="flex flex-col gap-4">
-                  <div>
-                    <h2 class="text-lg font-semibold">{{ selectedRelease.name }}</h2>
-                    <p class="text-muted-foreground text-sm">{{ selectedRelease.namespace }}</p>
-                  </div>
+            <ResizablePanel :default-size="40" :min-size="25" class="flex min-w-0 min-h-0 flex-col">
+              <div class="flex shrink-0 items-center justify-between gap-2 border-b p-2">
+                <span class="min-w-0 truncate text-sm font-medium">{{ selectedRelease.name }}</span>
+                <Button variant="ghost" size="icon-sm" :aria-label="$t('common.close')" @click="closeReleasePanel">
+                  <XIcon />
+                </Button>
+              </div>
+              <ScrollArea class="min-h-0 flex-1">
+                <div class="flex flex-col gap-4 p-4">
+                  <p class="text-muted-foreground text-sm">{{ selectedRelease.namespace }}</p>
 
                   <div class="flex flex-wrap items-center gap-4 text-sm">
                     <Badge :variant="statusVariant(selectedRelease.status)">{{ selectedRelease.status }}</Badge>
@@ -257,9 +256,9 @@ function goToResource(resourceRef: HelmResourceRef) {
                     </div>
                   </div>
                 </div>
-              </div>
-            </ScrollArea>
-          </ResizablePanel>
+              </ScrollArea>
+            </ResizablePanel>
+          </template>
         </ResizablePanelGroup>
       </div>
     </SidebarInset>

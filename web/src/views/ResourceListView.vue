@@ -118,6 +118,11 @@ function selectRow(item: any) {
   router.push(resourcePath(context.value, props.kind, item.metadata.namespace, item.metadata.name))
 }
 
+function closeDescribePanel() {
+  store.clearSelection()
+  router.push({ name: props.kind, params: { context: context.value } })
+}
+
 function readyReplicasLabel(item: any) {
   const ready = item.status?.readyReplicas || 0
   const desired = item.spec?.replicas ?? 0
@@ -252,7 +257,7 @@ function nodeMemoryLabel(item: any) {
         </div>
 
         <ResizablePanelGroup direction="horizontal" class="flex-1 rounded-lg border min-h-0">
-          <ResizablePanel :default-size="60" :min-size="30" class="min-w-0">
+          <ResizablePanel :default-size="store.selectedResource ? 60 : 100" :min-size="30" class="min-w-0">
             <div class="h-full min-w-0 overflow-auto">
               <template v-if="store.resourcesStatus === 'loading'">
                 <div class="flex flex-col gap-2 p-4">
@@ -377,11 +382,21 @@ function nodeMemoryLabel(item: any) {
             </div>
           </ResizablePanel>
 
-          <ResizableHandle with-handle />
+          <template v-if="store.selectedResource">
+            <ResizableHandle with-handle />
 
-          <ResizablePanel :default-size="40" :min-size="25" class="min-w-0">
-            <DescribePanel />
-          </ResizablePanel>
+            <ResizablePanel :default-size="40" :min-size="25" class="flex min-w-0 min-h-0 flex-col">
+              <div class="flex shrink-0 items-center justify-between gap-2 border-b p-2">
+                <span class="min-w-0 truncate text-sm font-medium">{{ store.selectedResource?.name }}</span>
+                <Button variant="ghost" size="icon-sm" :aria-label="$t('common.close')" @click="closeDescribePanel">
+                  <XIcon />
+                </Button>
+              </div>
+              <div class="min-h-0 flex-1">
+                <DescribePanel />
+              </div>
+            </ResizablePanel>
+          </template>
         </ResizablePanelGroup>
       </div>
     </SidebarInset>

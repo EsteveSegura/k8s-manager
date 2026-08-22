@@ -1,21 +1,26 @@
 <script lang="ts" setup>
 import type { DrawerContentEmits, DrawerContentProps } from 'reka-ui'
 import type { HTMLAttributes } from 'vue'
+import { XIcon } from '@lucide/vue'
 import { reactiveOmit } from '@vueuse/core'
 import {
+  DrawerClose,
   DrawerContent,
   DrawerHandle,
   DrawerPortal,
   useForwardPropsEmits,
 } from 'reka-ui'
 import { cn } from '@/lib/utils'
+import { Button } from '@/components/ui/button'
 import DrawerOverlay from './DrawerOverlay.vue'
 
 defineOptions({
   inheritAttrs: false,
 })
 
-const props = defineProps<DrawerContentProps & { class?: HTMLAttributes['class'] }>()
+const props = withDefaults(defineProps<DrawerContentProps & { class?: HTMLAttributes['class'], showCloseButton?: boolean }>(), {
+  showCloseButton: true,
+})
 const emits = defineEmits<DrawerContentEmits>()
 
 const delegatedProps = reactiveOmit(props, 'class')
@@ -43,6 +48,17 @@ const forwarded = useForwardPropsEmits(delegatedProps, emits)
     >
       <DrawerHandle class="bg-muted mt-4 h-1.5 w-[100px] rounded-full mx-auto hidden shrink-0 group-data-[swipe-direction=down]/drawer-content:block" />
       <slot />
+
+      <DrawerClose
+        v-if="showCloseButton"
+        data-slot="drawer-close"
+        as-child
+      >
+        <Button variant="ghost" class="absolute top-4 right-4" size="icon-sm">
+          <XIcon />
+          <span class="sr-only">Close</span>
+        </Button>
+      </DrawerClose>
     </DrawerContent>
   </DrawerPortal>
 </template>

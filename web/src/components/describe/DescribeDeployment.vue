@@ -5,7 +5,7 @@ import { useClusterStore } from '@/stores/cluster'
 import { servicesForDeployment, podsForDeployment } from '@/lib/k8s-relations'
 import { resourceTotalsForPods } from '@/lib/k8s-usage'
 import { useMetricsHistory } from '@/composables/useMetricsHistory'
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card'
+import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardAction } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
 import { Button } from '@/components/ui/button'
@@ -56,21 +56,16 @@ function serviceExposure(service: any) {
 
 <template>
   <div class="flex flex-col gap-4">
-    <div class="flex items-start justify-between gap-2">
-      <div>
-        <h2 class="text-lg font-semibold">{{ resource.metadata.name }}</h2>
-        <p class="text-muted-foreground text-sm">{{ resource.metadata.namespace }}</p>
-      </div>
-      <Button size="sm" @click="logsOpen = true">
-        <ScrollTextIcon data-icon="inline-start" />
-        {{ $t('describe.viewAllLogs') }}
-      </Button>
-    </div>
-
     <Card>
       <CardHeader>
         <CardTitle class="text-sm">{{ $t('describe.deployment.replicasTitle') }}</CardTitle>
         <CardDescription>{{ $t('describe.deployment.replicasDescription') }}</CardDescription>
+        <CardAction>
+          <Button size="sm" @click="logsOpen = true">
+            <ScrollTextIcon data-icon="inline-start" />
+            {{ $t('describe.viewAllLogs') }}
+          </Button>
+        </CardAction>
       </CardHeader>
       <CardContent class="flex flex-wrap gap-4 text-sm">
         <div><span class="text-muted-foreground">{{ $t('describe.deployment.desired') }}</span>{{ spec.replicas ?? 0 }}</div>
@@ -134,6 +129,8 @@ function serviceExposure(service: any) {
       </CardContent>
     </Card>
 
+    <ResourceEventsCard :namespace="resource.metadata.namespace" :matchers="eventMatchers" />
+
     <Card>
       <CardHeader>
         <CardTitle class="text-sm">Containers</CardTitle>
@@ -152,8 +149,6 @@ function serviceExposure(service: any) {
         </div>
       </CardContent>
     </Card>
-
-    <ResourceEventsCard :namespace="resource.metadata.namespace" :matchers="eventMatchers" />
 
     <AggregatedLogsDrawer
       v-model:open="logsOpen"

@@ -7,7 +7,7 @@ import { resourceTotalsForPods } from '@/lib/k8s-usage'
 import { podRestartCount, podCrashLooping } from '@/lib/pod-status'
 import { formatDateTime } from '@/lib/format'
 import { useMetricsHistory } from '@/composables/useMetricsHistory'
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card'
+import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardAction } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
@@ -55,21 +55,16 @@ function podPhaseVariant(phase: string) {
 
 <template>
   <div class="flex flex-col gap-4">
-    <div class="flex items-start justify-between gap-2">
-      <div>
-        <h2 class="text-lg font-semibold">{{ resource.metadata.name }}</h2>
-        <p class="text-muted-foreground text-sm">{{ resource.metadata.namespace }}</p>
-      </div>
-      <Button size="sm" @click="logsOpen = true">
-        <ScrollTextIcon data-icon="inline-start" />
-        {{ $t('describe.viewAllLogs') }}
-      </Button>
-    </div>
-
     <Card>
       <CardHeader>
         <CardTitle class="text-sm">{{ $t('describe.service.networkTitle') }}</CardTitle>
         <CardDescription>{{ $t('describe.service.networkDescription') }}</CardDescription>
+        <CardAction>
+          <Button size="sm" @click="logsOpen = true">
+            <ScrollTextIcon data-icon="inline-start" />
+            {{ $t('describe.viewAllLogs') }}
+          </Button>
+        </CardAction>
       </CardHeader>
       <CardContent class="flex flex-wrap items-center gap-4 text-sm">
         <Badge variant="outline">{{ spec.type || 'ClusterIP' }}</Badge>

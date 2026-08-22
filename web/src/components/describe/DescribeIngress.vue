@@ -47,11 +47,6 @@ function goToService(service: any) {
 
 <template>
   <div class="flex flex-col gap-4">
-    <div>
-      <h2 class="text-lg font-semibold">{{ resource.metadata.name }}</h2>
-      <p class="text-muted-foreground text-sm">{{ resource.metadata.namespace }}</p>
-    </div>
-
     <Card>
       <CardHeader>
         <CardTitle class="text-sm">{{ $t('describe.ingress.classTitle') }}</CardTitle>

@@ -6,7 +6,7 @@ import { podRestartCount, podCrashLooping } from '@/lib/pod-status'
 import { formatDateTime } from '@/lib/format'
 import { useMetricsHistory } from '@/composables/useMetricsHistory'
 import { usePodStatusHistory } from '@/composables/usePodStatusHistory'
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card'
+import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardAction } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
 import { Button } from '@/components/ui/button'
@@ -52,20 +52,15 @@ function phaseVariant(phase: string) {
 
 <template>
   <div class="flex flex-col gap-4">
-    <div class="flex items-start justify-between gap-2">
-      <div>
-        <h2 class="text-lg font-semibold">{{ resource.metadata.name }}</h2>
-        <p class="text-muted-foreground text-sm">{{ resource.metadata.namespace }}</p>
-      </div>
-      <Button size="sm" @click="logsOpen = true">
-        <ScrollTextIcon data-icon="inline-start" />
-        {{ $t('describe.viewLogs') }}
-      </Button>
-    </div>
-
     <Card>
       <CardHeader>
         <CardTitle class="text-sm">{{ $t('describe.pod.statusTitle') }}</CardTitle>
+        <CardAction>
+          <Button size="sm" @click="logsOpen = true">
+            <ScrollTextIcon data-icon="inline-start" />
+            {{ $t('describe.viewLogs') }}
+          </Button>
+        </CardAction>
       </CardHeader>
       <CardContent class="flex flex-wrap items-center gap-4 text-sm">
         <Badge :variant="phaseVariant(status.phase)">{{ status.phase || 'Unknown' }}</Badge>
@@ -93,6 +88,8 @@ function phaseVariant(phase: string) {
       </CardContent>
     </Card>
 
+    <ResourceEventsCard :namespace="resource.metadata.namespace" :matchers="eventMatchers" />
+
     <Card>
       <CardHeader>
         <CardTitle class="text-sm">Containers</CardTitle>
@@ -116,8 +113,6 @@ function phaseVariant(phase: string) {
         </div>
       </CardContent>
     </Card>
-
-    <ResourceEventsCard :namespace="resource.metadata.namespace" :matchers="eventMatchers" />
 
     <LogsDrawer
       v-model:open="logsOpen"

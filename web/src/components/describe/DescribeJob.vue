@@ -8,7 +8,7 @@ import { podRestartCount, podCrashLooping } from '@/lib/pod-status'
 import { formatDateTime } from '@/lib/format'
 import { jobStatusLabel, jobStatusVariant } from '@/lib/job-status'
 import { useMetricsHistory } from '@/composables/useMetricsHistory'
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card'
+import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardAction } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
 import { Button } from '@/components/ui/button'
@@ -57,20 +57,15 @@ function podPhaseVariant(phase: string) {
 
 <template>
   <div class="flex flex-col gap-4">
-    <div class="flex items-start justify-between gap-2">
-      <div>
-        <h2 class="text-lg font-semibold">{{ resource.metadata.name }}</h2>
-        <p class="text-muted-foreground text-sm">{{ resource.metadata.namespace }}</p>
-      </div>
-      <Button size="sm" @click="logsOpen = true">
-        <ScrollTextIcon data-icon="inline-start" />
-        {{ $t('describe.viewAllLogs') }}
-      </Button>
-    </div>
-
     <Card>
       <CardHeader>
         <CardTitle class="text-sm">{{ $t('describe.job.statusTitle') }}</CardTitle>
+        <CardAction>
+          <Button size="sm" @click="logsOpen = true">
+            <ScrollTextIcon data-icon="inline-start" />
+            {{ $t('describe.viewAllLogs') }}
+          </Button>
+        </CardAction>
       </CardHeader>
       <CardContent class="flex flex-wrap items-center gap-4 text-sm">
         <Badge :variant="jobStatusVariant(jobStatus)">{{ jobStatus }}</Badge>

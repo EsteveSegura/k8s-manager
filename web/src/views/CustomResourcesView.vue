@@ -13,8 +13,8 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { Empty, EmptyHeader, EmptyTitle, EmptyDescription, EmptyMedia } from '@/components/ui/empty'
 import { Separator } from '@/components/ui/separator'
 import { ScrollArea } from '@/components/ui/scroll-area'
-import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerDescription, DrawerFooter, DrawerClose } from '@/components/ui/drawer'
-import { InboxIcon, ArrowLeftIcon, XIcon, PuzzleIcon, CodeIcon, RefreshCwIcon } from '@lucide/vue'
+import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerDescription } from '@/components/ui/drawer'
+import { InboxIcon, ArrowLeftIcon, XIcon, CodeIcon, RefreshCwIcon } from '@lucide/vue'
 
 interface CrdVersion {
   name: string
@@ -114,6 +114,11 @@ function isSelected(crd: CrdItem) {
   return selectedCrd.value?.metadata.name === crd.metadata.name
 }
 
+function closeCrdPanel() {
+  selectedCrd.value = null
+  instances.value = []
+}
+
 const rawViewerOpen = ref(false)
 const rawViewerTitle = ref('')
 const rawViewerContent = ref('')
@@ -157,7 +162,7 @@ function viewRaw(instance: any) {
         </div>
 
         <ResizablePanelGroup direction="horizontal" class="flex-1 rounded-lg border min-h-0">
-          <ResizablePanel :default-size="55" :min-size="30" class="min-w-0">
+          <ResizablePanel :default-size="selectedCrd ? 55 : 100" :min-size="30" class="min-w-0">
             <div class="h-full min-w-0 overflow-auto">
               <template v-if="crdsStatus === 'loading'">
                 <div class="flex flex-col gap-2 p-4">
@@ -207,24 +212,19 @@ function viewRaw(instance: any) {
             </div>
           </ResizablePanel>
 
-          <ResizableHandle with-handle />
+          <template v-if="selectedCrd">
+            <ResizableHandle with-handle />
 
-          <ResizablePanel :default-size="45" :min-size="25" class="min-w-0">
-            <ScrollArea class="h-full">
-              <div class="p-4">
-                <Empty v-if="!selectedCrd">
-                  <EmptyHeader>
-                    <EmptyMedia variant="icon"><PuzzleIcon /></EmptyMedia>
-                    <EmptyTitle>{{ $t('crds.emptyTitle') }}</EmptyTitle>
-                    <EmptyDescription>{{ $t('crds.emptyDescription') }}</EmptyDescription>
-                  </EmptyHeader>
-                </Empty>
-
-                <div v-else class="flex flex-col gap-3">
-                  <div>
-                    <h2 class="text-lg font-semibold">{{ selectedCrd.spec.names.kind }}</h2>
-                    <p class="text-muted-foreground font-mono text-xs">{{ selectedCrd.spec.group }}/{{ storageVersion(selectedCrd) }}</p>
-                  </div>
+            <ResizablePanel :default-size="45" :min-size="25" class="flex min-w-0 min-h-0 flex-col">
+              <div class="flex shrink-0 items-center justify-between gap-2 border-b p-2">
+                <span class="min-w-0 truncate text-sm font-medium">{{ selectedCrd.spec.names.kind }}</span>
+                <Button variant="ghost" size="icon-sm" :aria-label="$t('common.close')" @click="closeCrdPanel">
+                  <XIcon />
+                </Button>
+              </div>
+              <ScrollArea class="min-h-0 flex-1">
+                <div class="flex flex-col gap-3 p-4">
+                  <p class="text-muted-foreground font-mono text-xs">{{ selectedCrd.spec.group }}/{{ storageVersion(selectedCrd) }}</p>
 
                   <Skeleton v-if="instancesStatus === 'loading'" class="h-40 w-full" />
 
@@ -258,9 +258,9 @@ function viewRaw(instance: any) {
                     </button>
                   </template>
                 </div>
-              </div>
-            </ScrollArea>
-          </ResizablePanel>
+              </ScrollArea>
+            </ResizablePanel>
+          </template>
         </ResizablePanelGroup>
       </div>
     </SidebarInset>
@@ -277,11 +277,6 @@ function viewRaw(instance: any) {
           <pre class="p-4 font-mono text-xs whitespace-pre-wrap break-words select-text cursor-text">{{ rawViewerContent }}</pre>
         </ScrollArea>
       </div>
-      <DrawerFooter class="shrink-0">
-        <DrawerClose as-child>
-          <Button variant="outline">{{ $t('common.close') }}</Button>
-        </DrawerClose>
-      </DrawerFooter>
     </DrawerContent>
   </Drawer>
 </template>
