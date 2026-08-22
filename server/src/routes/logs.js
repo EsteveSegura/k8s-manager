@@ -1,5 +1,5 @@
 const { Router } = require('express');
-const { createApis } = require('../k8s');
+const { createApis, errorMessage } = require('../k8s');
 
 const router = Router();
 
@@ -22,14 +22,7 @@ router.get('/:context/pods/:namespace/:name/logs', async (req, res) => {
 
     res.json({ logs, lines: logs.split('\n') });
   } catch (err) {
-    let message = err.message;
-    try {
-      const body = typeof err.body === 'string' ? JSON.parse(err.body) : err.body;
-      if (body?.message) message = body.message;
-    } catch {
-      // el body no era JSON parseable, se deja el mensaje original
-    }
-    res.status(err.code || 502).json({ error: message });
+    res.status(err.code || 502).json({ error: errorMessage(err) });
   }
 });
 

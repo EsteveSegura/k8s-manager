@@ -5,6 +5,9 @@ const contextsRouter = require('./routes/contexts');
 const resourcesRouter = require('./routes/resources');
 const logsRouter = require('./routes/logs');
 const metricsRouter = require('./routes/metrics');
+const crdsRouter = require('./routes/crds');
+const helmRouter = require('./routes/helm');
+const eventsRouter = require('./routes/events');
 
 const app = express();
 
@@ -15,6 +18,9 @@ app.use('/api', contextsRouter);
 app.use('/api', resourcesRouter);
 app.use('/api', logsRouter);
 app.use('/api', metricsRouter);
+app.use('/api', crdsRouter);
+app.use('/api', helmRouter);
+app.use('/api', eventsRouter);
 
 app.use((err, req, res, next) => {
   console.error(err);
