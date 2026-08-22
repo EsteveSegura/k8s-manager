@@ -42,12 +42,17 @@ export default {
   },
 
   resourceList: {
-    filterPlaceholder: 'Filtrar por namespace o nombre...',
+    filterPlaceholder: 'Filtrar por nombre...',
     loadErrorTitle: 'Error al cargar recursos',
     emptyTitle: 'Sin resultados',
     emptyDescription: 'No hay recursos que coincidan con el filtro.',
     permissionErrorTitle: 'Sin permisos para ver este recurso',
+    namespaceFilter: {
+      all: 'Todos los namespaces',
+      selected: '{count}/{total} namespaces',
+    },
     columns: {
+      namespace: 'Namespace',
       name: 'Nombre',
       replicas: 'Réplicas',
       type: 'Tipo',

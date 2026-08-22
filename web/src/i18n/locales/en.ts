@@ -42,12 +42,17 @@ export default {
   },
 
   resourceList: {
-    filterPlaceholder: 'Filter by namespace or name...',
+    filterPlaceholder: 'Filter by name...',
     loadErrorTitle: 'Failed to load resources',
     emptyTitle: 'No results',
     emptyDescription: 'No resources match the filter.',
     permissionErrorTitle: 'No permission to view this resource',
+    namespaceFilter: {
+      all: 'All namespaces',
+      selected: '{count}/{total} namespaces',
+    },
     columns: {
+      namespace: 'Namespace',
       name: 'Name',
       replicas: 'Replicas',
       type: 'Type',

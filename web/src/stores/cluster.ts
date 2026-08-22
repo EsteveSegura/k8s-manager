@@ -60,6 +60,25 @@ interface ClusterState {
   nodeMetricsStatus: 'idle' | 'loading' | 'ready' | 'unavailable'
   nodeMetricsUpdatedAt: number | null
   filterText: string
+  excludedNamespaces: string[]
+}
+
+const NAMESPACED_KINDS: ResourceKind[] = [
+  'deployments',
+  'services',
+  'pods',
+  'statefulsets',
+  'daemonsets',
+  'jobs',
+  'cronjobs',
+  'ingresses',
+  'configmaps',
+  'secrets',
+  'persistentvolumeclaims',
+]
+
+function namespaceFilterStorageKey(context: string): string {
+  return `namespaceFilter.excluded.${context}`
 }
 
 export const useClusterStore = defineStore('cluster', {
@@ -94,6 +113,7 @@ export const useClusterStore = defineStore('cluster', {
     nodeMetricsStatus: 'idle',
     nodeMetricsUpdatedAt: null,
     filterText: '',
+    excludedNamespaces: [],
   }),
 
   getters: {
@@ -114,6 +134,19 @@ export const useClusterStore = defineStore('cluster', {
         nodes: state.nodes,
       }
       return byKind[kind]
+    },
+    availableNamespaces: (state): string[] => {
+      const found = new Set<string>()
+      for (const kind of NAMESPACED_KINDS) {
+        for (const item of (state as any)[kind] as any[]) {
+          if (item.metadata?.namespace) found.add(item.metadata.namespace)
+        }
+      }
+      return Array.from(found).sort()
+    },
+    isNamespaceVisible: (state) => (namespace: string | null | undefined): boolean => {
+      if (!namespace) return true
+      return !state.excludedNamespaces.includes(namespace)
     },
     selectedResourceObject(): any | null {
       if (!this.selectedResource) return null
@@ -236,6 +269,36 @@ export const useClusterStore = defineStore('cluster', {
       this.filterText = value
     },
 
+    loadNamespaceFilter(context: string) {
+      try {
+        const raw = localStorage.getItem(namespaceFilterStorageKey(context))
+        this.excludedNamespaces = raw ? JSON.parse(raw) : []
+      } catch {
+        this.excludedNamespaces = []
+      }
+    },
+
+    persistNamespaceFilter() {
+      if (!this.currentContext) return
+      localStorage.setItem(namespaceFilterStorageKey(this.currentContext), JSON.stringify(this.excludedNamespaces))
+    },
+
+    toggleNamespace(namespace: string) {
+      const idx = this.excludedNamespaces.indexOf(namespace)
+      if (idx === -1) this.excludedNamespaces.push(namespace)
+      else this.excludedNamespaces.splice(idx, 1)
+      this.persistNamespaceFilter()
+    },
+
+    setExcludedNamespaces(namespaces: string[]) {
+      this.excludedNamespaces = namespaces
+      this.persistNamespaceFilter()
+    },
+
+    selectAllNamespaces() {
+      this.setExcludedNamespaces([])
+    },
+
     resetForNewContext() {
       this.deployments = []
       this.services = []
@@ -262,6 +325,7 @@ export const useClusterStore = defineStore('cluster', {
       this.nodeMetricsStatus = 'idle'
       this.nodeMetricsUpdatedAt = null
       this.filterText = ''
+      this.excludedNamespaces = []
     },
   },
 })

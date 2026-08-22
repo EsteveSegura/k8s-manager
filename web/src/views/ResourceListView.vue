@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from 'vue-router'
 import { useIntervalFn } from '@vueuse/core'
 import { useClusterStore } from '@/stores/cluster'
@@ -11,12 +12,13 @@ import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar'
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from '@/components/ui/resizable'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { InputGroup, InputGroupInput, InputGroupAddon, InputGroupButton } from '@/components/ui/input-group'
+import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuCheckboxItem, DropdownMenuSeparator } from '@/components/ui/dropdown-menu'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Empty, EmptyHeader, EmptyTitle, EmptyDescription, EmptyMedia } from '@/components/ui/empty'
 import { Separator } from '@/components/ui/separator'
-import { InboxIcon, RefreshCwIcon, XIcon, ArrowLeftIcon, ShieldAlertIcon, ScrollTextIcon } from '@lucide/vue'
+import { InboxIcon, RefreshCwIcon, XIcon, ArrowLeftIcon, ShieldAlertIcon, ScrollTextIcon, ListFilterIcon, ArrowUpIcon, ArrowDownIcon } from '@lucide/vue'
 import { formatDateTime } from '@/lib/format'
 import { jobStatusLabel, jobStatusVariant } from '@/lib/job-status'
 import { resourcePath } from '@/lib/resource-kinds'
@@ -24,6 +26,19 @@ import { parseCpu, parseMemory, formatCpu, formatMemory, percentOf } from '@/lib
 import type { ResourceKind } from '@/stores/cluster'
 
 const LOG_CAPABLE_KINDS: ResourceKind[] = ['pods', 'deployments', 'statefulsets', 'daemonsets', 'jobs', 'services']
+const NAMESPACE_FILTERABLE_KINDS: ResourceKind[] = [
+  'deployments',
+  'services',
+  'pods',
+  'statefulsets',
+  'daemonsets',
+  'jobs',
+  'cronjobs',
+  'ingresses',
+  'configmaps',
+  'secrets',
+  'persistentvolumeclaims',
+]
 
 const props = defineProps<{ kind: ResourceKind }>()
 
@@ -31,6 +46,7 @@ const store = useClusterStore()
 const settings = useSettingsStore()
 const route = useRoute()
 const router = useRouter()
+const { t } = useI18n()
 
 const filterText = computed({
   get: () => store.filterText,
@@ -45,6 +61,7 @@ function changeCluster() {
 }
 
 async function ensureLoaded() {
+  store.loadNamespaceFilter(context.value)
   try {
     await store.loadResources(context.value)
   } catch {
@@ -100,12 +117,155 @@ const permissionError = computed(() => store.resourceErrors[props.kind] || null)
 
 const filteredItems = computed(() => {
   const text = filterText.value.trim().toLowerCase()
-  if (!text) return items.value
   return items.value.filter((item: any) => {
-    const namespace = item.metadata?.namespace
-    const haystack = `${namespace ? namespace + '/' : ''}${item.metadata?.name}`.toLowerCase()
-    return haystack.includes(text)
+    if (!store.isNamespaceVisible(item.metadata?.namespace)) return false
+    if (!text) return true
+    return String(item.metadata?.name || '').toLowerCase().includes(text)
   })
+})
+
+const showNamespaceFilter = computed(() => NAMESPACE_FILTERABLE_KINDS.includes(props.kind))
+const namespaceSelectedCount = computed(() => store.availableNamespaces.length - store.excludedNamespaces.length)
+const allNamespacesSelected = computed(() => store.excludedNamespaces.length === 0)
+const namespaceFilterLabel = computed(() => {
+  if (allNamespacesSelected.value) return t('resourceList.namespaceFilter.all')
+  return t('resourceList.namespaceFilter.selected', { count: namespaceSelectedCount.value, total: store.availableNamespaces.length })
+})
+
+function toggleAllNamespaces() {
+  if (allNamespacesSelected.value) {
+    store.setExcludedNamespaces(store.availableNamespaces.slice())
+  } else {
+    store.selectAllNamespaces()
+  }
+}
+
+const sortKey = ref<string | null>(null)
+const sortDir = ref<'asc' | 'desc'>('asc')
+
+watch(
+  () => props.kind,
+  () => {
+    sortKey.value = null
+    sortDir.value = 'asc'
+  },
+)
+
+function setSort(key: string) {
+  if (sortKey.value === key) {
+    sortDir.value = sortDir.value === 'asc' ? 'desc' : 'asc'
+  } else {
+    sortKey.value = key
+    sortDir.value = 'asc'
+  }
+}
+
+function sortIcon(key: string) {
+  if (sortKey.value !== key) return null
+  return sortDir.value === 'asc' ? ArrowUpIcon : ArrowDownIcon
+}
+
+function compareValues(a: any, b: any): number {
+  if (typeof a === 'number' && typeof b === 'number') return a - b
+  return String(a ?? '').localeCompare(String(b ?? ''), undefined, { numeric: true, sensitivity: 'base' })
+}
+
+function nodeCpuUsageValue(item: any) {
+  const metric = store.nodeMetrics[item.metadata?.name]
+  return metric ? parseCpu(metric.usage?.cpu) : -1
+}
+
+function nodeMemoryUsageValue(item: any) {
+  const metric = store.nodeMetrics[item.metadata?.name]
+  return metric ? parseMemory(metric.usage?.memory) : -1
+}
+
+const sortAccessors = computed<Record<string, (item: any) => any>>(() => {
+  const base: Record<string, (item: any) => any> = {
+    namespace: (item) => item.metadata?.namespace || '',
+    name: (item) => item.metadata?.name || '',
+  }
+  switch (props.kind) {
+    case 'deployments':
+    case 'statefulsets':
+      return { ...base, replicas: (item) => item.status?.readyReplicas ?? -1 }
+    case 'daemonsets':
+      return { ...base, ready: (item) => item.status?.numberReady ?? -1 }
+    case 'jobs':
+      return {
+        ...base,
+        completions: (item) => item.status?.succeeded ?? -1,
+        status: (item) => jobStatusLabel(item),
+      }
+    case 'cronjobs':
+      return {
+        ...base,
+        schedule: (item) => item.spec?.schedule || '',
+        suspended: (item) => (item.spec?.suspend ? 1 : 0),
+        lastSchedule: (item) => item.status?.lastScheduleTime || '',
+      }
+    case 'services':
+      return {
+        ...base,
+        type: (item) => item.spec?.type || '',
+        ports: (item) => serviceExposure(item).ports,
+      }
+    case 'ingresses':
+      return {
+        ...base,
+        hosts: (item) => ingressHostsLabel(item),
+        class: (item) => item.spec?.ingressClassName || '',
+      }
+    case 'pods':
+      return {
+        ...base,
+        status: (item) => podPhase(item),
+        node: (item) => item.spec?.nodeName || '',
+        created: (item) => item.metadata?.creationTimestamp || '',
+      }
+    case 'configmaps':
+      return { ...base, keys: (item) => configMapKeysCount(item) }
+    case 'secrets':
+      return {
+        ...base,
+        type: (item) => item.type || 'Opaque',
+        keys: (item) => item.dataKeys?.length || 0,
+      }
+    case 'persistentvolumeclaims':
+      return {
+        ...base,
+        status: (item) => item.status?.phase || '',
+        capacity: (item) => parseMemory(item.status?.capacity?.storage),
+        storageClass: (item) => item.spec?.storageClassName || '',
+      }
+    case 'persistentvolumes':
+      return {
+        ...base,
+        status: (item) => item.status?.phase || '',
+        capacity: (item) => parseMemory(item.spec?.capacity?.storage),
+        storageClass: (item) => item.spec?.storageClassName || '',
+      }
+    case 'nodes':
+      return {
+        ...base,
+        status: (item) => (nodeReadyVariant(item) === 'secondary' ? 1 : 0),
+        roles: (item) => nodeRoles(item),
+        cpu: (item) => nodeCpuUsageValue(item),
+        memory: (item) => nodeMemoryUsageValue(item),
+        pods: (item) => nodePodCount(item),
+      }
+    default:
+      return base
+  }
+})
+
+const sortedItems = computed(() => {
+  const list = filteredItems.value
+  if (!sortKey.value) return list
+  const accessor = sortAccessors.value[sortKey.value]
+  if (!accessor) return list
+  const sorted = [...list].sort((a, b) => compareValues(accessor(a), accessor(b)))
+  return sortDir.value === 'desc' ? sorted.reverse() : sorted
 })
 
 function isSelected(item: any) {
@@ -241,7 +401,7 @@ function nodeMemoryLabel(item: any) {
       </header>
 
       <div class="flex min-w-0 flex-1 flex-col gap-3 p-4 min-h-0">
-        <div class="flex min-w-0 flex-wrap items-center gap-3">
+        <div class="@container flex min-w-0 flex-wrap items-center gap-3">
           <InputGroup class="max-w-sm">
             <InputGroupInput v-model="filterText" :placeholder="$t('resourceList.filterPlaceholder')" />
             <InputGroupAddon v-if="filterText" align="inline-end">
@@ -251,18 +411,41 @@ function nodeMemoryLabel(item: any) {
             </InputGroupAddon>
           </InputGroup>
 
-          <Button variant="outline" size="sm" :disabled="store.isRefreshing" @click="refreshNow">
+          <Button variant="outline" size="sm" class="hidden shrink-0 @lg:inline-flex" :disabled="store.isRefreshing" @click="refreshNow">
             <RefreshCwIcon data-icon="inline-start" :class="{ 'animate-spin': store.isRefreshing }" />
             {{ $t('common.refresh') }}
           </Button>
 
-          <span v-if="settings.autoRefresh" class="shrink-0 text-xs text-muted-foreground">
+          <span v-if="settings.autoRefresh" class="hidden shrink-0 text-xs text-muted-foreground @xl:inline">
             {{ $t('common.autoRefreshActive') }}
           </span>
 
-          <span v-if="lastUpdatedLabel" class="shrink-0 text-xs text-muted-foreground">
+          <span v-if="lastUpdatedLabel" class="hidden shrink-0 text-xs text-muted-foreground @2xl:inline">
             {{ $t('common.updatedAt', { time: lastUpdatedLabel }) }}
           </span>
+
+          <DropdownMenu v-if="showNamespaceFilter">
+            <DropdownMenuTrigger as-child>
+              <Button variant="outline" size="sm" class="ml-auto shrink-0">
+                <ListFilterIcon data-icon="inline-start" />
+                <span class="hidden @md:inline">{{ namespaceFilterLabel }}</span>
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" class="w-56">
+              <DropdownMenuCheckboxItem :model-value="allNamespacesSelected" @select.prevent="toggleAllNamespaces">
+                {{ $t('resourceList.namespaceFilter.all') }}
+              </DropdownMenuCheckboxItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuCheckboxItem
+                v-for="ns in store.availableNamespaces"
+                :key="ns"
+                :model-value="!store.excludedNamespaces.includes(ns)"
+                @select.prevent="store.toggleNamespace(ns)"
+              >
+                {{ ns }}
+              </DropdownMenuCheckboxItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
 
         <ResizablePanelGroup direction="horizontal" class="flex-1 rounded-lg border min-h-0">
@@ -301,41 +484,101 @@ function nodeMemoryLabel(item: any) {
               <Table v-else>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Namespace</TableHead>
-                    <TableHead>{{ $t('resourceList.columns.name') }}</TableHead>
-                    <TableHead v-if="kind === 'deployments' || kind === 'statefulsets'">{{ $t('resourceList.columns.replicas') }}</TableHead>
-                    <TableHead v-if="kind === 'daemonsets'">{{ $t('resourceList.columns.ready') }}</TableHead>
-                    <TableHead v-if="kind === 'jobs'">{{ $t('resourceList.columns.completions') }}</TableHead>
-                    <TableHead v-if="kind === 'jobs'">{{ $t('resourceList.columns.status') }}</TableHead>
-                    <TableHead v-if="kind === 'cronjobs'">{{ $t('resourceList.columns.schedule') }}</TableHead>
-                    <TableHead v-if="kind === 'cronjobs'">{{ $t('resourceList.columns.suspended') }}</TableHead>
-                    <TableHead v-if="kind === 'cronjobs'">{{ $t('resourceList.columns.lastSchedule') }}</TableHead>
-                    <TableHead v-if="kind === 'services'">{{ $t('resourceList.columns.type') }}</TableHead>
-                    <TableHead v-if="kind === 'services'">{{ $t('resourceList.columns.ports') }}</TableHead>
-                    <TableHead v-if="kind === 'ingresses'">{{ $t('resourceList.columns.hosts') }}</TableHead>
-                    <TableHead v-if="kind === 'ingresses'">{{ $t('resourceList.columns.class') }}</TableHead>
-                    <TableHead v-if="kind === 'pods'">{{ $t('resourceList.columns.status') }}</TableHead>
-                    <TableHead v-if="kind === 'pods'">{{ $t('resourceList.columns.node') }}</TableHead>
-                    <TableHead v-if="kind === 'pods'">{{ $t('resourceList.columns.created') }}</TableHead>
-                    <TableHead v-if="kind === 'configmaps'">{{ $t('resourceList.columns.keys') }}</TableHead>
-                    <TableHead v-if="kind === 'secrets'">{{ $t('resourceList.columns.type') }}</TableHead>
-                    <TableHead v-if="kind === 'secrets'">{{ $t('resourceList.columns.keys') }}</TableHead>
-                    <TableHead v-if="kind === 'persistentvolumeclaims'">{{ $t('resourceList.columns.status') }}</TableHead>
-                    <TableHead v-if="kind === 'persistentvolumeclaims'">{{ $t('resourceList.columns.capacity') }}</TableHead>
-                    <TableHead v-if="kind === 'persistentvolumeclaims'">{{ $t('resourceList.columns.storageClass') }}</TableHead>
-                    <TableHead v-if="kind === 'persistentvolumes'">{{ $t('resourceList.columns.status') }}</TableHead>
-                    <TableHead v-if="kind === 'persistentvolumes'">{{ $t('resourceList.columns.capacity') }}</TableHead>
-                    <TableHead v-if="kind === 'persistentvolumes'">{{ $t('resourceList.columns.storageClass') }}</TableHead>
-                    <TableHead v-if="kind === 'nodes'">{{ $t('resourceList.columns.status') }}</TableHead>
-                    <TableHead v-if="kind === 'nodes'">{{ $t('resourceList.columns.roles') }}</TableHead>
-                    <TableHead v-if="kind === 'nodes'">CPU</TableHead>
-                    <TableHead v-if="kind === 'nodes'">{{ $t('usage.memory') }}</TableHead>
-                    <TableHead v-if="kind === 'nodes'">{{ $t('resourceList.columns.pods') }}</TableHead>
+                    <TableHead class="cursor-pointer select-none hover:text-foreground" @click="setSort('namespace')">
+                      <span class="inline-flex items-center gap-1">{{ $t('resourceList.columns.namespace') }}<component :is="sortIcon('namespace')" v-if="sortIcon('namespace')" class="size-3.5" /></span>
+                    </TableHead>
+                    <TableHead class="cursor-pointer select-none hover:text-foreground" @click="setSort('name')">
+                      <span class="inline-flex items-center gap-1">{{ $t('resourceList.columns.name') }}<component :is="sortIcon('name')" v-if="sortIcon('name')" class="size-3.5" /></span>
+                    </TableHead>
+                    <TableHead v-if="kind === 'deployments' || kind === 'statefulsets'" class="cursor-pointer select-none hover:text-foreground" @click="setSort('replicas')">
+                      <span class="inline-flex items-center gap-1">{{ $t('resourceList.columns.replicas') }}<component :is="sortIcon('replicas')" v-if="sortIcon('replicas')" class="size-3.5" /></span>
+                    </TableHead>
+                    <TableHead v-if="kind === 'daemonsets'" class="cursor-pointer select-none hover:text-foreground" @click="setSort('ready')">
+                      <span class="inline-flex items-center gap-1">{{ $t('resourceList.columns.ready') }}<component :is="sortIcon('ready')" v-if="sortIcon('ready')" class="size-3.5" /></span>
+                    </TableHead>
+                    <TableHead v-if="kind === 'jobs'" class="cursor-pointer select-none hover:text-foreground" @click="setSort('completions')">
+                      <span class="inline-flex items-center gap-1">{{ $t('resourceList.columns.completions') }}<component :is="sortIcon('completions')" v-if="sortIcon('completions')" class="size-3.5" /></span>
+                    </TableHead>
+                    <TableHead v-if="kind === 'jobs'" class="cursor-pointer select-none hover:text-foreground" @click="setSort('status')">
+                      <span class="inline-flex items-center gap-1">{{ $t('resourceList.columns.status') }}<component :is="sortIcon('status')" v-if="sortIcon('status')" class="size-3.5" /></span>
+                    </TableHead>
+                    <TableHead v-if="kind === 'cronjobs'" class="cursor-pointer select-none hover:text-foreground" @click="setSort('schedule')">
+                      <span class="inline-flex items-center gap-1">{{ $t('resourceList.columns.schedule') }}<component :is="sortIcon('schedule')" v-if="sortIcon('schedule')" class="size-3.5" /></span>
+                    </TableHead>
+                    <TableHead v-if="kind === 'cronjobs'" class="cursor-pointer select-none hover:text-foreground" @click="setSort('suspended')">
+                      <span class="inline-flex items-center gap-1">{{ $t('resourceList.columns.suspended') }}<component :is="sortIcon('suspended')" v-if="sortIcon('suspended')" class="size-3.5" /></span>
+                    </TableHead>
+                    <TableHead v-if="kind === 'cronjobs'" class="cursor-pointer select-none hover:text-foreground" @click="setSort('lastSchedule')">
+                      <span class="inline-flex items-center gap-1">{{ $t('resourceList.columns.lastSchedule') }}<component :is="sortIcon('lastSchedule')" v-if="sortIcon('lastSchedule')" class="size-3.5" /></span>
+                    </TableHead>
+                    <TableHead v-if="kind === 'services'" class="cursor-pointer select-none hover:text-foreground" @click="setSort('type')">
+                      <span class="inline-flex items-center gap-1">{{ $t('resourceList.columns.type') }}<component :is="sortIcon('type')" v-if="sortIcon('type')" class="size-3.5" /></span>
+                    </TableHead>
+                    <TableHead v-if="kind === 'services'" class="cursor-pointer select-none hover:text-foreground" @click="setSort('ports')">
+                      <span class="inline-flex items-center gap-1">{{ $t('resourceList.columns.ports') }}<component :is="sortIcon('ports')" v-if="sortIcon('ports')" class="size-3.5" /></span>
+                    </TableHead>
+                    <TableHead v-if="kind === 'ingresses'" class="cursor-pointer select-none hover:text-foreground" @click="setSort('hosts')">
+                      <span class="inline-flex items-center gap-1">{{ $t('resourceList.columns.hosts') }}<component :is="sortIcon('hosts')" v-if="sortIcon('hosts')" class="size-3.5" /></span>
+                    </TableHead>
+                    <TableHead v-if="kind === 'ingresses'" class="cursor-pointer select-none hover:text-foreground" @click="setSort('class')">
+                      <span class="inline-flex items-center gap-1">{{ $t('resourceList.columns.class') }}<component :is="sortIcon('class')" v-if="sortIcon('class')" class="size-3.5" /></span>
+                    </TableHead>
+                    <TableHead v-if="kind === 'pods'" class="cursor-pointer select-none hover:text-foreground" @click="setSort('status')">
+                      <span class="inline-flex items-center gap-1">{{ $t('resourceList.columns.status') }}<component :is="sortIcon('status')" v-if="sortIcon('status')" class="size-3.5" /></span>
+                    </TableHead>
+                    <TableHead v-if="kind === 'pods'" class="cursor-pointer select-none hover:text-foreground" @click="setSort('node')">
+                      <span class="inline-flex items-center gap-1">{{ $t('resourceList.columns.node') }}<component :is="sortIcon('node')" v-if="sortIcon('node')" class="size-3.5" /></span>
+                    </TableHead>
+                    <TableHead v-if="kind === 'pods'" class="cursor-pointer select-none hover:text-foreground" @click="setSort('created')">
+                      <span class="inline-flex items-center gap-1">{{ $t('resourceList.columns.created') }}<component :is="sortIcon('created')" v-if="sortIcon('created')" class="size-3.5" /></span>
+                    </TableHead>
+                    <TableHead v-if="kind === 'configmaps'" class="cursor-pointer select-none hover:text-foreground" @click="setSort('keys')">
+                      <span class="inline-flex items-center gap-1">{{ $t('resourceList.columns.keys') }}<component :is="sortIcon('keys')" v-if="sortIcon('keys')" class="size-3.5" /></span>
+                    </TableHead>
+                    <TableHead v-if="kind === 'secrets'" class="cursor-pointer select-none hover:text-foreground" @click="setSort('type')">
+                      <span class="inline-flex items-center gap-1">{{ $t('resourceList.columns.type') }}<component :is="sortIcon('type')" v-if="sortIcon('type')" class="size-3.5" /></span>
+                    </TableHead>
+                    <TableHead v-if="kind === 'secrets'" class="cursor-pointer select-none hover:text-foreground" @click="setSort('keys')">
+                      <span class="inline-flex items-center gap-1">{{ $t('resourceList.columns.keys') }}<component :is="sortIcon('keys')" v-if="sortIcon('keys')" class="size-3.5" /></span>
+                    </TableHead>
+                    <TableHead v-if="kind === 'persistentvolumeclaims'" class="cursor-pointer select-none hover:text-foreground" @click="setSort('status')">
+                      <span class="inline-flex items-center gap-1">{{ $t('resourceList.columns.status') }}<component :is="sortIcon('status')" v-if="sortIcon('status')" class="size-3.5" /></span>
+                    </TableHead>
+                    <TableHead v-if="kind === 'persistentvolumeclaims'" class="cursor-pointer select-none hover:text-foreground" @click="setSort('capacity')">
+                      <span class="inline-flex items-center gap-1">{{ $t('resourceList.columns.capacity') }}<component :is="sortIcon('capacity')" v-if="sortIcon('capacity')" class="size-3.5" /></span>
+                    </TableHead>
+                    <TableHead v-if="kind === 'persistentvolumeclaims'" class="cursor-pointer select-none hover:text-foreground" @click="setSort('storageClass')">
+                      <span class="inline-flex items-center gap-1">{{ $t('resourceList.columns.storageClass') }}<component :is="sortIcon('storageClass')" v-if="sortIcon('storageClass')" class="size-3.5" /></span>
+                    </TableHead>
+                    <TableHead v-if="kind === 'persistentvolumes'" class="cursor-pointer select-none hover:text-foreground" @click="setSort('status')">
+                      <span class="inline-flex items-center gap-1">{{ $t('resourceList.columns.status') }}<component :is="sortIcon('status')" v-if="sortIcon('status')" class="size-3.5" /></span>
+                    </TableHead>
+                    <TableHead v-if="kind === 'persistentvolumes'" class="cursor-pointer select-none hover:text-foreground" @click="setSort('capacity')">
+                      <span class="inline-flex items-center gap-1">{{ $t('resourceList.columns.capacity') }}<component :is="sortIcon('capacity')" v-if="sortIcon('capacity')" class="size-3.5" /></span>
+                    </TableHead>
+                    <TableHead v-if="kind === 'persistentvolumes'" class="cursor-pointer select-none hover:text-foreground" @click="setSort('storageClass')">
+                      <span class="inline-flex items-center gap-1">{{ $t('resourceList.columns.storageClass') }}<component :is="sortIcon('storageClass')" v-if="sortIcon('storageClass')" class="size-3.5" /></span>
+                    </TableHead>
+                    <TableHead v-if="kind === 'nodes'" class="cursor-pointer select-none hover:text-foreground" @click="setSort('status')">
+                      <span class="inline-flex items-center gap-1">{{ $t('resourceList.columns.status') }}<component :is="sortIcon('status')" v-if="sortIcon('status')" class="size-3.5" /></span>
+                    </TableHead>
+                    <TableHead v-if="kind === 'nodes'" class="cursor-pointer select-none hover:text-foreground" @click="setSort('roles')">
+                      <span class="inline-flex items-center gap-1">{{ $t('resourceList.columns.roles') }}<component :is="sortIcon('roles')" v-if="sortIcon('roles')" class="size-3.5" /></span>
+                    </TableHead>
+                    <TableHead v-if="kind === 'nodes'" class="cursor-pointer select-none hover:text-foreground" @click="setSort('cpu')">
+                      <span class="inline-flex items-center gap-1">CPU<component :is="sortIcon('cpu')" v-if="sortIcon('cpu')" class="size-3.5" /></span>
+                    </TableHead>
+                    <TableHead v-if="kind === 'nodes'" class="cursor-pointer select-none hover:text-foreground" @click="setSort('memory')">
+                      <span class="inline-flex items-center gap-1">{{ $t('usage.memory') }}<component :is="sortIcon('memory')" v-if="sortIcon('memory')" class="size-3.5" /></span>
+                    </TableHead>
+                    <TableHead v-if="kind === 'nodes'" class="cursor-pointer select-none hover:text-foreground" @click="setSort('pods')">
+                      <span class="inline-flex items-center gap-1">{{ $t('resourceList.columns.pods') }}<component :is="sortIcon('pods')" v-if="sortIcon('pods')" class="size-3.5" /></span>
+                    </TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   <TableRow
-                    v-for="item in filteredItems"
+                    v-for="item in sortedItems"
                     :key="`${item.metadata.namespace}/${item.metadata.name}`"
                     class="cursor-pointer"
                     :data-state="isSelected(item) ? 'selected' : undefined"
