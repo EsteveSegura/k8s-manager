@@ -1,4 +1,5 @@
 import { defineStore } from 'pinia'
+import type { ResourceKind } from '@/stores/cluster'
 
 export const MIN_REFRESH_SECONDS = 5
 export const MAX_REFRESH_SECONDS = 600
@@ -6,6 +7,7 @@ const DEFAULT_REFRESH_SECONDS = 15
 
 const REFRESH_SECONDS_KEY = 'settings.refreshIntervalSeconds'
 const AUTO_REFRESH_KEY = 'settings.autoRefresh'
+const PINNED_KINDS_KEY = 'settings.pinnedKinds'
 
 function loadRefreshSeconds(): number {
   const stored = Number(localStorage.getItem(REFRESH_SECONDS_KEY))
@@ -19,19 +21,31 @@ function loadAutoRefresh(): boolean {
   return stored === 'true'
 }
 
+function loadPinnedKinds(): ResourceKind[] {
+  try {
+    const raw = localStorage.getItem(PINNED_KINDS_KEY)
+    return raw ? JSON.parse(raw) : []
+  } catch {
+    return []
+  }
+}
+
 interface SettingsState {
   refreshIntervalSeconds: number
   autoRefresh: boolean
+  pinnedKinds: ResourceKind[]
 }
 
 export const useSettingsStore = defineStore('settings', {
   state: (): SettingsState => ({
     refreshIntervalSeconds: loadRefreshSeconds(),
     autoRefresh: loadAutoRefresh(),
+    pinnedKinds: loadPinnedKinds(),
   }),
 
   getters: {
     refreshIntervalMs: (state) => state.refreshIntervalSeconds * 1000,
+    isPinned: (state) => (kind: ResourceKind) => state.pinnedKinds.includes(kind),
   },
 
   actions: {
@@ -45,6 +59,13 @@ export const useSettingsStore = defineStore('settings', {
     setAutoRefresh(enabled: boolean) {
       this.autoRefresh = enabled
       localStorage.setItem(AUTO_REFRESH_KEY, String(enabled))
+    },
+
+    togglePinned(kind: ResourceKind) {
+      const idx = this.pinnedKinds.indexOf(kind)
+      if (idx === -1) this.pinnedKinds.push(kind)
+      else this.pinnedKinds.splice(idx, 1)
+      localStorage.setItem(PINNED_KINDS_KEY, JSON.stringify(this.pinnedKinds))
     },
   },
 })

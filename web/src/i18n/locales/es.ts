@@ -20,6 +20,8 @@ export default {
     configAndStorage: 'Config y almacenamiento',
     cluster: 'Clúster',
     extensions: 'Extensiones',
+    pin: 'Fijar en Principal',
+    unpin: 'Quitar de Principal',
   },
 
   breadcrumb: {

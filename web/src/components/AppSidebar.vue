@@ -3,6 +3,7 @@ import { computed, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useClusterStore } from '@/stores/cluster'
 import type { ResourceKind } from '@/stores/cluster'
+import { useSettingsStore } from '@/stores/settings'
 import {
   Sidebar,
   SidebarContent,
@@ -12,6 +13,7 @@ import {
   SidebarGroupLabel,
   SidebarHeader,
   SidebarMenu,
+  SidebarMenuAction,
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarTrigger,
@@ -44,9 +46,12 @@ import {
   ShieldIcon,
   CableIcon,
   UmbrellaIcon,
+  PinIcon,
+  PinOffIcon,
 } from '@lucide/vue'
 
 const store = useClusterStore()
+const settings = useSettingsStore()
 const route = useRoute()
 const router = useRouter()
 const settingsDialog = useSettingsDialog()
@@ -102,12 +107,27 @@ const navGroups: { label: string; items: NavItem[] }[] = [
   },
 ]
 
+const clusterItems: NavItem[] = [
+  { kind: 'namespaces', label: 'Namespaces', icon: FolderIcon },
+  { kind: 'nodes', label: 'Nodes', icon: ServerIcon },
+  { kind: 'poddisruptionbudgets', label: 'PodDisruptionBudgets', icon: UmbrellaIcon },
+]
+
+const itemByKind = new Map<ResourceKind, NavItem>([...navGroups.flatMap((group) => group.items), ...clusterItems].map((item) => [item.kind, item]))
+
+const pinnedItems = computed(() => settings.pinnedKinds.map((kind) => itemByKind.get(kind)).filter((item): item is NavItem => !!item))
+
 function countFor(kind: ResourceKind) {
   return store.resourcesByKind(kind).filter((item: any) => store.isNamespaceVisible(item.metadata?.namespace)).length
 }
 
 function goTo(kind: string) {
   router.push(`/${context.value}/${kind}`)
+}
+
+function togglePin(kind: ResourceKind, event: Event) {
+  event.stopPropagation()
+  settings.togglePinned(kind)
 }
 </script>
 
@@ -138,6 +158,22 @@ function goTo(kind: string) {
                 <span>{{ $t('dashboard.title') }}</span>
               </SidebarMenuButton>
             </SidebarMenuItem>
+            <SidebarMenuItem v-for="item in pinnedItems" :key="`pinned-${item.kind}`">
+              <SidebarMenuButton
+                :is-active="route.name === item.kind || route.params.kind === item.kind"
+                :tooltip="item.label"
+                @click="goTo(item.kind)"
+              >
+                <component :is="item.icon" />
+                <span>{{ item.label }}</span>
+              </SidebarMenuButton>
+              <Badge variant="secondary" class="absolute right-8 top-1.5 group-data-[collapsible=icon]:hidden">
+                {{ countFor(item.kind) }}
+              </Badge>
+              <SidebarMenuAction :aria-label="$t('sidebar.unpin')" @click="togglePin(item.kind, $event)">
+                <PinOffIcon />
+              </SidebarMenuAction>
+            </SidebarMenuItem>
           </SidebarMenu>
         </SidebarGroupContent>
       </SidebarGroup>
@@ -155,9 +191,16 @@ function goTo(kind: string) {
                 <component :is="item.icon" />
                 <span>{{ item.label }}</span>
               </SidebarMenuButton>
-              <Badge variant="secondary" class="absolute right-2 top-1.5 group-data-[collapsible=icon]:hidden">
+              <Badge variant="secondary" class="absolute right-8 top-1.5 group-data-[collapsible=icon]:hidden">
                 {{ countFor(item.kind) }}
               </Badge>
+              <SidebarMenuAction
+                :show-on-hover="!settings.isPinned(item.kind)"
+                :aria-label="settings.isPinned(item.kind) ? $t('sidebar.unpin') : $t('sidebar.pin')"
+                @click="togglePin(item.kind, $event)"
+              >
+                <component :is="settings.isPinned(item.kind) ? PinOffIcon : PinIcon" />
+              </SidebarMenuAction>
             </SidebarMenuItem>
           </SidebarMenu>
         </SidebarGroupContent>
@@ -167,36 +210,25 @@ function goTo(kind: string) {
         <SidebarGroupLabel>{{ $t('sidebar.cluster') }}</SidebarGroupLabel>
         <SidebarGroupContent>
           <SidebarMenu>
-            <SidebarMenuItem>
-              <SidebarMenuButton :is-active="route.name === 'namespaces' || route.params.kind === 'namespaces'" tooltip="Namespaces" @click="goTo('namespaces')">
-                <FolderIcon />
-                <span>Namespaces</span>
-              </SidebarMenuButton>
-              <Badge variant="secondary" class="absolute right-2 top-1.5 group-data-[collapsible=icon]:hidden">
-                {{ countFor('namespaces') }}
-              </Badge>
-            </SidebarMenuItem>
-            <SidebarMenuItem>
-              <SidebarMenuButton :is-active="route.name === 'nodes' || route.params.kind === 'nodes'" tooltip="Nodes" @click="goTo('nodes')">
-                <ServerIcon />
-                <span>Nodes</span>
-              </SidebarMenuButton>
-              <Badge variant="secondary" class="absolute right-2 top-1.5 group-data-[collapsible=icon]:hidden">
-                {{ countFor('nodes') }}
-              </Badge>
-            </SidebarMenuItem>
-            <SidebarMenuItem>
+            <SidebarMenuItem v-for="item in clusterItems" :key="item.kind">
               <SidebarMenuButton
-                :is-active="route.name === 'poddisruptionbudgets' || route.params.kind === 'poddisruptionbudgets'"
-                tooltip="PodDisruptionBudgets"
-                @click="goTo('poddisruptionbudgets')"
+                :is-active="route.name === item.kind || route.params.kind === item.kind"
+                :tooltip="item.label"
+                @click="goTo(item.kind)"
               >
-                <UmbrellaIcon />
-                <span>PodDisruptionBudgets</span>
+                <component :is="item.icon" />
+                <span>{{ item.label }}</span>
               </SidebarMenuButton>
-              <Badge variant="secondary" class="absolute right-2 top-1.5 group-data-[collapsible=icon]:hidden">
-                {{ countFor('poddisruptionbudgets') }}
+              <Badge variant="secondary" class="absolute right-8 top-1.5 group-data-[collapsible=icon]:hidden">
+                {{ countFor(item.kind) }}
               </Badge>
+              <SidebarMenuAction
+                :show-on-hover="!settings.isPinned(item.kind)"
+                :aria-label="settings.isPinned(item.kind) ? $t('sidebar.unpin') : $t('sidebar.pin')"
+                @click="togglePin(item.kind, $event)"
+              >
+                <component :is="settings.isPinned(item.kind) ? PinOffIcon : PinIcon" />
+              </SidebarMenuAction>
             </SidebarMenuItem>
             <SidebarMenuItem>
               <SidebarMenuButton :is-active="route.name === 'events'" :tooltip="$t('events.title')" @click="router.push(`/${context}/events`)">

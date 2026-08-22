@@ -20,6 +20,8 @@ export default {
     configAndStorage: 'Config & storage',
     cluster: 'Cluster',
     extensions: 'Extensions',
+    pin: 'Pin to Main',
+    unpin: 'Unpin from Main',
   },
 
   breadcrumb: {
