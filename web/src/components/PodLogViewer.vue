@@ -6,13 +6,14 @@ import { useClusterStore } from '@/stores/cluster'
 import { useSettingsStore } from '@/stores/settings'
 import { useLogScroll } from '@/composables/useLogScroll'
 import { useLogSearch } from '@/composables/useLogSearch'
+import { downloadTextFile } from '@/lib/download'
 import { Button } from '@/components/ui/button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue, SelectGroup } from '@/components/ui/select'
 import { InputGroup, InputGroupInput, InputGroupAddon, InputGroupButton } from '@/components/ui/input-group'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Empty, EmptyHeader, EmptyTitle, EmptyDescription } from '@/components/ui/empty'
-import { RefreshCwIcon, ArrowDownIcon, SearchIcon, XIcon, ChevronUpIcon, ChevronDownIcon } from '@lucide/vue'
+import { RefreshCwIcon, ArrowDownIcon, DownloadIcon, SearchIcon, XIcon, ChevronUpIcon, ChevronDownIcon } from '@lucide/vue'
 
 const props = defineProps<{
   namespace: string
@@ -93,6 +94,11 @@ async function resumeFollowing() {
   if (props.active) fetchLogs()
 }
 
+function downloadLogs() {
+  const suffix = selectedContainer.value ? `-${selectedContainer.value}` : ''
+  downloadTextFile(`${props.namespace}-${props.name}${suffix}.log`, logs.value)
+}
+
 const { pause: pauseAutoRefresh, resume: resumeAutoRefresh } = useIntervalFn(
   () => {
     if (props.active && isAtBottom.value) fetchLogs()
@@ -128,6 +134,11 @@ watch(
       <Button variant="outline" size="sm" :disabled="status === 'loading'" @click="fetchLogs">
         <RefreshCwIcon data-icon="inline-start" :class="{ 'animate-spin': isRefreshing }" />
         {{ $t('common.refresh') }}
+      </Button>
+
+      <Button variant="outline" size="sm" :disabled="status !== 'ready' || !logs" @click="downloadLogs">
+        <DownloadIcon data-icon="inline-start" />
+        {{ $t('logs.download') }}
       </Button>
 
       <span v-if="settings.autoRefresh" class="text-xs text-muted-foreground">{{ $t('common.autoRefreshActive') }}</span>

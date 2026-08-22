@@ -6,6 +6,7 @@ import { useClusterStore } from '@/stores/cluster'
 import { useSettingsStore } from '@/stores/settings'
 import { useLogScroll } from '@/composables/useLogScroll'
 import { useLogSearch } from '@/composables/useLogSearch'
+import { downloadTextFile } from '@/lib/download'
 import {
   Drawer,
   DrawerContent,
@@ -18,7 +19,7 @@ import { InputGroup, InputGroupInput, InputGroupAddon, InputGroupButton } from '
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Empty, EmptyHeader, EmptyTitle, EmptyDescription } from '@/components/ui/empty'
-import { RefreshCwIcon, ArrowDownIcon, SearchIcon, XIcon, ChevronUpIcon, ChevronDownIcon } from '@lucide/vue'
+import { RefreshCwIcon, ArrowDownIcon, DownloadIcon, SearchIcon, XIcon, ChevronUpIcon, ChevronDownIcon } from '@lucide/vue'
 
 export interface LogTarget {
   namespace: string
@@ -144,6 +145,11 @@ async function resumeFollowing() {
   fetchAllLogs()
 }
 
+function downloadLogs() {
+  const slug = props.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '')
+  downloadTextFile(`${slug || 'logs'}.log`, combinedText.value)
+}
+
 function timeLabel(timestamp: number | null) {
   if (timestamp === null) return null
   return new Date(timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })
@@ -194,6 +200,10 @@ const {
             <Button variant="outline" size="sm" :disabled="status === 'loading'" @click="fetchAllLogs">
               <RefreshCwIcon data-icon="inline-start" :class="{ 'animate-spin': isRefreshing }" />
               {{ $t('common.refresh') }}
+            </Button>
+            <Button variant="outline" size="sm" :disabled="status !== 'ready' || lines.length === 0" @click="downloadLogs">
+              <DownloadIcon data-icon="inline-start" />
+              {{ $t('logs.download') }}
             </Button>
             <span v-if="settings.autoRefresh" class="text-xs text-muted-foreground">{{ $t('common.autoRefreshActive') }}</span>
             <span v-if="error" class="text-xs text-destructive">{{ error }}</span>

@@ -352,5 +352,6 @@ export default {
     emptyLinesTitle: 'Sin líneas de log',
     emptyLinesDescription: 'Los pods no han producido salida reciente.',
     jumpToBottom: 'Volver al final',
+    download: 'Descargar',
   },
 }
