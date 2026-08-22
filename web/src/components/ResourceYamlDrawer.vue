@@ -53,9 +53,11 @@ function downloadYaml() {
           </Button>
         </div>
 
-        <ScrollArea class="min-h-0 flex-1 rounded-md border">
-          <pre class="p-4 font-mono text-xs whitespace-pre-wrap break-words select-text cursor-text"><template v-for="(tokens, i) in highlightedLines" :key="i"><span v-for="(token, j) in tokens" :key="j" :class="token.cls">{{ token.text }}</span>{{ i < highlightedLines.length - 1 ? '\n' : '' }}</template></pre>
-        </ScrollArea>
+        <div class="relative min-h-0 flex-1" @pointerdown.stop>
+          <ScrollArea class="h-full min-w-0 rounded-md border">
+            <pre class="p-4 font-mono text-xs whitespace-pre-wrap break-words select-text cursor-text"><template v-for="(tokens, i) in highlightedLines" :key="i"><span v-for="(token, j) in tokens" :key="j" :class="token.cls">{{ token.text }}</span>{{ i < highlightedLines.length - 1 ? '\n' : '' }}</template></pre>
+          </ScrollArea>
+        </div>
       </div>
     </DrawerContent>
   </Drawer>

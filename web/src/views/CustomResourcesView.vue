@@ -273,9 +273,11 @@ function viewRaw(instance: any) {
         <DrawerDescription>{{ $t('crds.rawViewerDescription') }}</DrawerDescription>
       </DrawerHeader>
       <div class="flex min-h-0 min-w-0 flex-1 flex-col overflow-y-auto px-4 pb-4">
-        <ScrollArea class="h-full min-w-0 rounded-md border">
-          <pre class="p-4 font-mono text-xs whitespace-pre-wrap break-words select-text cursor-text">{{ rawViewerContent }}</pre>
-        </ScrollArea>
+        <div class="relative min-h-0 flex-1" @pointerdown.stop>
+          <ScrollArea class="h-full min-w-0 rounded-md border">
+            <pre class="p-4 font-mono text-xs whitespace-pre-wrap break-words select-text cursor-text">{{ rawViewerContent }}</pre>
+          </ScrollArea>
+        </div>
       </div>
     </DrawerContent>
   </Drawer>
