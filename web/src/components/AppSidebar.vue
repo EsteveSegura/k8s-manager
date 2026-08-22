@@ -19,6 +19,7 @@ import {
   SidebarTrigger,
 } from '@/components/ui/sidebar'
 import { Badge } from '@/components/ui/badge'
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
 import { useSettingsDialog } from '@/composables/useSettingsDialog'
 import {
   BoxesIcon,
@@ -48,6 +49,7 @@ import {
   UmbrellaIcon,
   PinIcon,
   PinOffIcon,
+  ChevronDownIcon,
 } from '@lucide/vue'
 
 const store = useClusterStore()
@@ -133,6 +135,14 @@ function togglePin(kind: ResourceKind, event: Event) {
   // ya que group-focus-within no se libera hasta que el foco se mueve.
   ;(event.currentTarget as HTMLElement | null)?.blur()
 }
+
+function isGroupOpen(key: string) {
+  return !settings.isSidebarGroupCollapsed(key)
+}
+
+function setGroupOpen(key: string, open: boolean) {
+  settings.setSidebarGroupOpen(key, open)
+}
 </script>
 
 <template>
@@ -148,132 +158,186 @@ function togglePin(kind: ResourceKind, event: Event) {
     </SidebarHeader>
 
     <SidebarContent>
-      <SidebarGroup>
-        <SidebarGroupLabel>{{ $t('sidebar.main') }}</SidebarGroupLabel>
-        <SidebarGroupContent>
-          <SidebarMenu>
-            <SidebarMenuItem>
-              <SidebarMenuButton
-                :is-active="route.name === 'dashboard'"
-                :tooltip="$t('dashboard.title')"
-                @click="router.push(`/${context}/dashboard`)"
-              >
-                <LayoutDashboardIcon />
-                <span>{{ $t('dashboard.title') }}</span>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-            <SidebarMenuItem v-for="item in pinnedItems" :key="`pinned-${item.kind}`">
-              <SidebarMenuButton
-                :is-active="route.name === item.kind || route.params.kind === item.kind"
-                :tooltip="item.label"
-                @click="goTo(item.kind)"
-              >
-                <component :is="item.icon" />
-                <span>{{ item.label }}</span>
-              </SidebarMenuButton>
-              <Badge
-                variant="secondary"
-                class="absolute right-2 top-1.5 group-hover/menu-item:hidden group-focus-within/menu-item:hidden group-data-[collapsible=icon]:hidden"
-              >
-                {{ countFor(item.kind) }}
-              </Badge>
-              <SidebarMenuAction show-on-hover class="right-2" :aria-label="$t('sidebar.unpin')" @click="togglePin(item.kind, $event)">
-                <PinOffIcon />
-              </SidebarMenuAction>
-            </SidebarMenuItem>
-          </SidebarMenu>
-        </SidebarGroupContent>
-      </SidebarGroup>
+      <Collapsible
+        class="group/collapsible"
+        :open="isGroupOpen('sidebar.main')"
+        @update:open="(open) => setGroupOpen('sidebar.main', open)"
+      >
+        <SidebarGroup>
+          <CollapsibleTrigger as-child>
+            <SidebarGroupLabel class="cursor-pointer">
+              <span>{{ $t('sidebar.main') }}</span>
+              <ChevronDownIcon class="ml-auto shrink-0 transition-transform group-data-[state=closed]/collapsible:-rotate-90" />
+            </SidebarGroupLabel>
+          </CollapsibleTrigger>
+          <CollapsibleContent>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                <SidebarMenuItem>
+                  <SidebarMenuButton
+                    :is-active="route.name === 'dashboard'"
+                    :tooltip="$t('dashboard.title')"
+                    @click="router.push(`/${context}/dashboard`)"
+                  >
+                    <LayoutDashboardIcon />
+                    <span>{{ $t('dashboard.title') }}</span>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+                <SidebarMenuItem v-for="item in pinnedItems" :key="`pinned-${item.kind}`">
+                  <SidebarMenuButton
+                    :is-active="route.name === item.kind || route.params.kind === item.kind"
+                    :tooltip="item.label"
+                    @click="goTo(item.kind)"
+                  >
+                    <component :is="item.icon" />
+                    <span>{{ item.label }}</span>
+                  </SidebarMenuButton>
+                  <Badge
+                    variant="secondary"
+                    class="absolute right-2 top-1.5 group-hover/menu-item:hidden group-focus-within/menu-item:hidden group-data-[collapsible=icon]:hidden"
+                  >
+                    {{ countFor(item.kind) }}
+                  </Badge>
+                  <SidebarMenuAction show-on-hover class="right-2" :aria-label="$t('sidebar.unpin')" @click="togglePin(item.kind, $event)">
+                    <PinOffIcon />
+                  </SidebarMenuAction>
+                </SidebarMenuItem>
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </CollapsibleContent>
+        </SidebarGroup>
+      </Collapsible>
 
-      <SidebarGroup v-for="group in navGroups" :key="group.label">
-        <SidebarGroupLabel>{{ $t(group.label) }}</SidebarGroupLabel>
-        <SidebarGroupContent>
-          <SidebarMenu>
-            <SidebarMenuItem v-for="item in group.items" :key="item.kind">
-              <SidebarMenuButton
-                :is-active="route.name === item.kind || route.params.kind === item.kind"
-                :tooltip="item.label"
-                @click="goTo(item.kind)"
-              >
-                <component :is="item.icon" />
-                <span>{{ item.label }}</span>
-              </SidebarMenuButton>
-              <Badge
-                variant="secondary"
-                class="absolute right-2 top-1.5 group-hover/menu-item:hidden group-focus-within/menu-item:hidden group-data-[collapsible=icon]:hidden"
-              >
-                {{ countFor(item.kind) }}
-              </Badge>
-              <SidebarMenuAction
-                show-on-hover
-                class="right-2"
-                :aria-label="settings.isPinned(item.kind) ? $t('sidebar.unpin') : $t('sidebar.pin')"
-                @click="togglePin(item.kind, $event)"
-              >
-                <component :is="settings.isPinned(item.kind) ? PinOffIcon : PinIcon" />
-              </SidebarMenuAction>
-            </SidebarMenuItem>
-          </SidebarMenu>
-        </SidebarGroupContent>
-      </SidebarGroup>
+      <Collapsible
+        v-for="group in navGroups"
+        :key="group.label"
+        class="group/collapsible"
+        :open="isGroupOpen(group.label)"
+        @update:open="(open) => setGroupOpen(group.label, open)"
+      >
+        <SidebarGroup>
+          <CollapsibleTrigger as-child>
+            <SidebarGroupLabel class="cursor-pointer">
+              <span>{{ $t(group.label) }}</span>
+              <ChevronDownIcon class="ml-auto shrink-0 transition-transform group-data-[state=closed]/collapsible:-rotate-90" />
+            </SidebarGroupLabel>
+          </CollapsibleTrigger>
+          <CollapsibleContent>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                <SidebarMenuItem v-for="item in group.items" :key="item.kind">
+                  <SidebarMenuButton
+                    :is-active="route.name === item.kind || route.params.kind === item.kind"
+                    :tooltip="item.label"
+                    @click="goTo(item.kind)"
+                  >
+                    <component :is="item.icon" />
+                    <span>{{ item.label }}</span>
+                  </SidebarMenuButton>
+                  <Badge
+                    variant="secondary"
+                    class="absolute right-2 top-1.5 group-hover/menu-item:hidden group-focus-within/menu-item:hidden group-data-[collapsible=icon]:hidden"
+                  >
+                    {{ countFor(item.kind) }}
+                  </Badge>
+                  <SidebarMenuAction
+                    show-on-hover
+                    class="right-2"
+                    :aria-label="settings.isPinned(item.kind) ? $t('sidebar.unpin') : $t('sidebar.pin')"
+                    @click="togglePin(item.kind, $event)"
+                  >
+                    <component :is="settings.isPinned(item.kind) ? PinOffIcon : PinIcon" />
+                  </SidebarMenuAction>
+                </SidebarMenuItem>
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </CollapsibleContent>
+        </SidebarGroup>
+      </Collapsible>
 
-      <SidebarGroup>
-        <SidebarGroupLabel>{{ $t('sidebar.cluster') }}</SidebarGroupLabel>
-        <SidebarGroupContent>
-          <SidebarMenu>
-            <SidebarMenuItem v-for="item in clusterItems" :key="item.kind">
-              <SidebarMenuButton
-                :is-active="route.name === item.kind || route.params.kind === item.kind"
-                :tooltip="item.label"
-                @click="goTo(item.kind)"
-              >
-                <component :is="item.icon" />
-                <span>{{ item.label }}</span>
-              </SidebarMenuButton>
-              <Badge
-                variant="secondary"
-                class="absolute right-2 top-1.5 group-hover/menu-item:hidden group-focus-within/menu-item:hidden group-data-[collapsible=icon]:hidden"
-              >
-                {{ countFor(item.kind) }}
-              </Badge>
-              <SidebarMenuAction
-                show-on-hover
-                class="right-2"
-                :aria-label="settings.isPinned(item.kind) ? $t('sidebar.unpin') : $t('sidebar.pin')"
-                @click="togglePin(item.kind, $event)"
-              >
-                <component :is="settings.isPinned(item.kind) ? PinOffIcon : PinIcon" />
-              </SidebarMenuAction>
-            </SidebarMenuItem>
-            <SidebarMenuItem>
-              <SidebarMenuButton :is-active="route.name === 'events'" :tooltip="$t('events.title')" @click="router.push(`/${context}/events`)">
-                <ActivityIcon />
-                <span>{{ $t('events.title') }}</span>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-          </SidebarMenu>
-        </SidebarGroupContent>
-      </SidebarGroup>
+      <Collapsible
+        class="group/collapsible"
+        :open="isGroupOpen('sidebar.cluster')"
+        @update:open="(open) => setGroupOpen('sidebar.cluster', open)"
+      >
+        <SidebarGroup>
+          <CollapsibleTrigger as-child>
+            <SidebarGroupLabel class="cursor-pointer">
+              <span>{{ $t('sidebar.cluster') }}</span>
+              <ChevronDownIcon class="ml-auto shrink-0 transition-transform group-data-[state=closed]/collapsible:-rotate-90" />
+            </SidebarGroupLabel>
+          </CollapsibleTrigger>
+          <CollapsibleContent>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                <SidebarMenuItem v-for="item in clusterItems" :key="item.kind">
+                  <SidebarMenuButton
+                    :is-active="route.name === item.kind || route.params.kind === item.kind"
+                    :tooltip="item.label"
+                    @click="goTo(item.kind)"
+                  >
+                    <component :is="item.icon" />
+                    <span>{{ item.label }}</span>
+                  </SidebarMenuButton>
+                  <Badge
+                    variant="secondary"
+                    class="absolute right-2 top-1.5 group-hover/menu-item:hidden group-focus-within/menu-item:hidden group-data-[collapsible=icon]:hidden"
+                  >
+                    {{ countFor(item.kind) }}
+                  </Badge>
+                  <SidebarMenuAction
+                    show-on-hover
+                    class="right-2"
+                    :aria-label="settings.isPinned(item.kind) ? $t('sidebar.unpin') : $t('sidebar.pin')"
+                    @click="togglePin(item.kind, $event)"
+                  >
+                    <component :is="settings.isPinned(item.kind) ? PinOffIcon : PinIcon" />
+                  </SidebarMenuAction>
+                </SidebarMenuItem>
+                <SidebarMenuItem>
+                  <SidebarMenuButton :is-active="route.name === 'events'" :tooltip="$t('events.title')" @click="router.push(`/${context}/events`)">
+                    <ActivityIcon />
+                    <span>{{ $t('events.title') }}</span>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </CollapsibleContent>
+        </SidebarGroup>
+      </Collapsible>
 
-      <SidebarGroup>
-        <SidebarGroupLabel>{{ $t('sidebar.extensions') }}</SidebarGroupLabel>
-        <SidebarGroupContent>
-          <SidebarMenu>
-            <SidebarMenuItem>
-              <SidebarMenuButton :is-active="route.name === 'crds'" tooltip="CRDs" @click="router.push(`/${context}/crds`)">
-                <PuzzleIcon />
-                <span>CRDs</span>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-            <SidebarMenuItem>
-              <SidebarMenuButton :is-active="route.name === 'helm'" tooltip="Helm" @click="router.push(`/${context}/helm`)">
-                <ShipWheelIcon />
-                <span>Helm</span>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-          </SidebarMenu>
-        </SidebarGroupContent>
-      </SidebarGroup>
+      <Collapsible
+        class="group/collapsible"
+        :open="isGroupOpen('sidebar.extensions')"
+        @update:open="(open) => setGroupOpen('sidebar.extensions', open)"
+      >
+        <SidebarGroup>
+          <CollapsibleTrigger as-child>
+            <SidebarGroupLabel class="cursor-pointer">
+              <span>{{ $t('sidebar.extensions') }}</span>
+              <ChevronDownIcon class="ml-auto shrink-0 transition-transform group-data-[state=closed]/collapsible:-rotate-90" />
+            </SidebarGroupLabel>
+          </CollapsibleTrigger>
+          <CollapsibleContent>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                <SidebarMenuItem>
+                  <SidebarMenuButton :is-active="route.name === 'crds'" tooltip="CRDs" @click="router.push(`/${context}/crds`)">
+                    <PuzzleIcon />
+                    <span>CRDs</span>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+                <SidebarMenuItem>
+                  <SidebarMenuButton :is-active="route.name === 'helm'" tooltip="Helm" @click="router.push(`/${context}/helm`)">
+                    <ShipWheelIcon />
+                    <span>Helm</span>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </CollapsibleContent>
+        </SidebarGroup>
+      </Collapsible>
     </SidebarContent>
 
     <SidebarFooter class="border-t border-sidebar-border bg-black/5 dark:bg-black/20">
