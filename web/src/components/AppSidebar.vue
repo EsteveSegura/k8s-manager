@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useClusterStore } from '@/stores/cluster'
 import type { ResourceKind } from '@/stores/cluster'
@@ -46,6 +46,14 @@ const settingsDialog = useSettingsDialog()
 
 const context = computed(() => String(route.params.context || ''))
 
+watch(
+  context,
+  (value) => {
+    if (value) store.loadNamespaceFilter(value)
+  },
+  { immediate: true },
+)
+
 interface NavItem {
   kind: ResourceKind
   label: string
@@ -83,7 +91,7 @@ const navGroups: { label: string; items: NavItem[] }[] = [
 ]
 
 function countFor(kind: ResourceKind) {
-  return store.resourcesByKind(kind).length
+  return store.resourcesByKind(kind).filter((item: any) => store.isNamespaceVisible(item.metadata?.namespace)).length
 }
 
 function goTo(kind: string) {

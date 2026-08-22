@@ -5,6 +5,7 @@ import CustomResourcesView from '@/views/CustomResourcesView.vue'
 import HelmReleasesView from '@/views/HelmReleasesView.vue'
 import EventsView from '@/views/EventsView.vue'
 import DashboardView from '@/views/DashboardView.vue'
+import ClusterLayout from '@/components/ClusterLayout.vue'
 import type { ResourceKind } from '@/stores/cluster'
 
 const LIST_KINDS: ResourceKind[] = [
@@ -27,38 +28,44 @@ const router = createRouter({
   history: createWebHistory(),
   routes: [
     { path: '/', name: 'select-context', component: SelectContextView },
-    { path: '/:context', redirect: (to) => ({ path: `/${to.params.context}/dashboard` }) },
     {
-      path: '/:context/dashboard',
-      name: 'dashboard',
-      component: DashboardView,
-    },
-    ...LIST_KINDS.map((kind) => ({
-      path: `/:context/${kind}`,
-      name: kind,
-      component: ResourceListView,
-      props: { kind },
-    })),
-    {
-      path: '/:context/crds',
-      name: 'crds',
-      component: CustomResourcesView,
-    },
-    {
-      path: '/:context/helm',
-      name: 'helm',
-      component: HelmReleasesView,
-    },
-    {
-      path: '/:context/events',
-      name: 'events',
-      component: EventsView,
-    },
-    {
-      path: '/:context/:kind/:namespace/:name',
-      name: 'resource-detail',
-      component: ResourceListView,
-      props: (route) => ({ kind: route.params.kind }),
+      path: '/:context',
+      component: ClusterLayout,
+      redirect: (to) => ({ path: `/${to.params.context}/dashboard` }),
+      children: [
+        {
+          path: 'dashboard',
+          name: 'dashboard',
+          component: DashboardView,
+        },
+        ...LIST_KINDS.map((kind) => ({
+          path: kind,
+          name: kind,
+          component: ResourceListView,
+          props: { kind },
+        })),
+        {
+          path: 'crds',
+          name: 'crds',
+          component: CustomResourcesView,
+        },
+        {
+          path: 'helm',
+          name: 'helm',
+          component: HelmReleasesView,
+        },
+        {
+          path: 'events',
+          name: 'events',
+          component: EventsView,
+        },
+        {
+          path: ':kind/:namespace/:name',
+          name: 'resource-detail',
+          component: ResourceListView,
+          props: (route) => ({ kind: route.params.kind }),
+        },
+      ],
     },
   ],
 })

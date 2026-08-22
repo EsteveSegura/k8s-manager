@@ -7,9 +7,7 @@ import { useSettingsStore } from '@/stores/settings'
 import { K8S_KIND_TO_RESOURCE_KIND } from '@/lib/k8s-kind-map'
 import { resourcePath } from '@/lib/resource-kinds'
 import { formatDateTime } from '@/lib/format'
-import AppSidebar from '@/components/AppSidebar.vue'
 import NamespaceFilter from '@/components/NamespaceFilter.vue'
-import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { InputGroup, InputGroupInput, InputGroupAddon, InputGroupButton } from '@/components/ui/input-group'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue, SelectGroup } from '@/components/ui/select'
@@ -137,9 +135,6 @@ function typeVariant(type: string) {
 </script>
 
 <template>
-  <SidebarProvider class="h-svh">
-    <AppSidebar />
-    <SidebarInset class="min-w-0 min-h-0">
       <header class="flex h-14 min-w-0 shrink-0 items-center gap-2 border-b px-4">
         <Button variant="ghost" size="icon-sm" :aria-label="$t('common.changeCluster')" @click="changeCluster">
           <ArrowLeftIcon />
@@ -245,6 +240,4 @@ function typeVariant(type: string) {
           </Table>
         </div>
       </div>
-    </SidebarInset>
-  </SidebarProvider>
 </template>

@@ -6,8 +6,6 @@ import { useIntervalFn } from '@vueuse/core'
 import { useClusterStore } from '@/stores/cluster'
 import { useSettingsStore } from '@/stores/settings'
 import type { ResourceKind } from '@/stores/cluster'
-import AppSidebar from '@/components/AppSidebar.vue'
-import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar'
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Badge } from '@/components/ui/badge'
@@ -190,9 +188,6 @@ function goToIssue(issue: Issue) {
 </script>
 
 <template>
-  <SidebarProvider class="h-svh">
-    <AppSidebar />
-    <SidebarInset class="min-w-0 min-h-0">
       <header class="flex h-14 min-w-0 shrink-0 items-center gap-2 border-b px-4">
         <Button variant="ghost" size="icon-sm" :aria-label="$t('common.changeCluster')" @click="changeCluster">
           <ArrowLeftIcon />
@@ -294,6 +289,4 @@ function goToIssue(issue: Issue) {
           </Card>
         </template>
       </div>
-    </SidebarInset>
-  </SidebarProvider>
 </template>

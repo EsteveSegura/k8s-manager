@@ -4,11 +4,9 @@ import { useRoute, useRouter } from 'vue-router'
 import { useIntervalFn } from '@vueuse/core'
 import { useClusterStore } from '@/stores/cluster'
 import { useSettingsStore } from '@/stores/settings'
-import AppSidebar from '@/components/AppSidebar.vue'
 import AppBreadcrumb from '@/components/AppBreadcrumb.vue'
 import DescribePanel from '@/components/describe/DescribePanel.vue'
 import NamespaceFilter from '@/components/NamespaceFilter.vue'
-import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar'
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from '@/components/ui/resizable'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { InputGroup, InputGroupInput, InputGroupAddon, InputGroupButton } from '@/components/ui/input-group'
@@ -373,9 +371,6 @@ function nodeMemoryLabel(item: any) {
 </script>
 
 <template>
-  <SidebarProvider class="h-svh">
-    <AppSidebar />
-    <SidebarInset class="min-w-0 min-h-0">
       <header class="flex h-14 min-w-0 shrink-0 items-center gap-2 border-b px-4">
         <Button variant="ghost" size="icon-sm" :aria-label="$t('common.changeCluster')" @click="changeCluster">
           <ArrowLeftIcon />
@@ -620,6 +615,4 @@ function nodeMemoryLabel(item: any) {
           </template>
         </ResizablePanelGroup>
       </div>
-    </SidebarInset>
-  </SidebarProvider>
 </template>
