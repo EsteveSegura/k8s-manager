@@ -240,7 +240,7 @@ function goToIssue(issue: Issue) {
               </CardHeader>
               <CardContent class="min-w-0">
                 <div class="flex items-baseline gap-2">
-                  <span class="min-w-0 truncate text-xl font-semibold">{{ stat.healthy }}/{{ stat.total }}</span>
+                  <span class="min-w-0 truncate text-xl font-semibold" :title="`${stat.healthy}/${stat.total}`">{{ stat.healthy }}/{{ stat.total }}</span>
                   <Badge v-if="stat.total - stat.healthy > 0" variant="destructive" class="shrink-0">{{ stat.total - stat.healthy }}</Badge>
                   <Badge v-else-if="stat.total > 0" variant="secondary" class="shrink-0">OK</Badge>
                 </div>
