@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { onMounted, onUnmounted, ref, watch } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { useClusterStore } from '@/stores/cluster'
 import { useSettingsDialog } from '@/composables/useSettingsDialog'
 import { resourcePath } from '@/lib/resource-kinds'
@@ -36,10 +36,12 @@ import {
 import type { ResourceKind } from '@/stores/cluster'
 
 const store = useClusterStore()
+const route = useRoute()
 const router = useRouter()
 const settingsDialog = useSettingsDialog()
 const open = ref(false)
 const query = ref('')
+const showResults = ref(false)
 
 const groups: { kind: ResourceKind; label: string; icon: typeof BoxesIcon }[] = [
   { kind: 'deployments', label: 'Deployments', icon: BoxesIcon },
@@ -68,7 +70,19 @@ onMounted(() => window.addEventListener('keydown', handleKeydown))
 onUnmounted(() => window.removeEventListener('keydown', handleKeydown))
 
 watch(open, (isOpen) => {
-  if (isOpen) query.value = ''
+  if (isOpen) {
+    query.value = ''
+    showResults.value = false
+
+    const context = String(route.params.context || '')
+    if (context) store.loadResources(context).catch(() => {})
+
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        showResults.value = true
+      })
+    })
+  }
 })
 
 function selectItem(kind: ResourceKind, item: any) {
@@ -128,21 +142,23 @@ function goToPage(name: string) {
         </CommandItem>
       </CommandGroup>
 
-      <CommandSeparator class="[[hidden]+&]:hidden" />
+      <template v-if="showResults">
+        <CommandSeparator class="[[hidden]+&]:hidden" />
 
-      <CommandGroup v-for="group in groups" :key="group.kind" :heading="group.label">
-        <CommandItem
-          v-for="item in store.resourcesByKind(group.kind)"
-          :key="`${group.kind}-${item.metadata.namespace}-${item.metadata.name}`"
-          :value="item.metadata.namespace ? `${item.metadata.namespace}/${item.metadata.name}` : item.metadata.name"
-          @select="selectItem(group.kind, item)"
-        >
-          <component :is="group.icon" class="text-muted-foreground" />
-          <span class="truncate">
-            <span v-if="item.metadata.namespace" class="text-muted-foreground">{{ item.metadata.namespace }}/</span>{{ item.metadata.name }}
-          </span>
-        </CommandItem>
-      </CommandGroup>
+        <CommandGroup v-for="group in groups" :key="group.kind" :heading="group.label">
+          <CommandItem
+            v-for="item in store.resourcesByKind(group.kind)"
+            :key="`${group.kind}-${item.metadata.namespace}-${item.metadata.name}`"
+            :value="item.metadata.namespace ? `${item.metadata.namespace}/${item.metadata.name}` : item.metadata.name"
+            @select="selectItem(group.kind, item)"
+          >
+            <component :is="group.icon" class="text-muted-foreground" />
+            <span class="truncate">
+              <span v-if="item.metadata.namespace" class="text-muted-foreground">{{ item.metadata.namespace }}/</span>{{ item.metadata.name }}
+            </span>
+          </CommandItem>
+        </CommandGroup>
+      </template>
     </CommandList>
   </CommandDialog>
 </template>

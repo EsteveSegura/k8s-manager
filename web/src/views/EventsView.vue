@@ -67,8 +67,18 @@ async function loadEvents() {
   }
 }
 
-onMounted(loadEvents)
-watch(context, loadEvents)
+function ensureResourcesLoaded() {
+  store.loadResources(context.value).catch(() => {})
+}
+
+onMounted(() => {
+  loadEvents()
+  ensureResourcesLoaded()
+})
+watch(context, () => {
+  loadEvents()
+  ensureResourcesLoaded()
+})
 
 const { pause: pauseAutoRefresh, resume: resumeAutoRefresh } = useIntervalFn(loadEvents, () => settings.refreshIntervalMs, {
   immediate: false,
