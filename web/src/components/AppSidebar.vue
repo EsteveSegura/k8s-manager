@@ -125,6 +125,7 @@ function goTo(kind: string) {
 
     <SidebarContent>
       <SidebarGroup>
+        <SidebarGroupLabel>{{ $t('sidebar.main') }}</SidebarGroupLabel>
         <SidebarGroupContent>
           <SidebarMenu>
             <SidebarMenuItem>

@@ -14,6 +14,7 @@ export default {
   },
 
   sidebar: {
+    main: 'Main',
     workloads: 'Workloads',
     network: 'Network',
     configAndStorage: 'Config & storage',

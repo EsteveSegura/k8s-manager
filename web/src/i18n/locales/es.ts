@@ -14,6 +14,7 @@ export default {
   },
 
   sidebar: {
+    main: 'Principal',
     workloads: 'Workloads',
     network: 'Red',
     configAndStorage: 'Config y almacenamiento',
