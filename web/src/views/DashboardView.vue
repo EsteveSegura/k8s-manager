@@ -238,11 +238,11 @@ function goToIssue(issue: Issue) {
                   {{ stat.label }}
                 </CardTitle>
               </CardHeader>
-              <CardContent>
-                <div class="flex items-baseline gap-2">
-                  <span class="text-2xl font-semibold">{{ stat.healthy }}/{{ stat.total }}</span>
-                  <Badge v-if="stat.total - stat.healthy > 0" variant="destructive">{{ stat.total - stat.healthy }}</Badge>
-                  <Badge v-else-if="stat.total > 0" variant="secondary">OK</Badge>
+              <CardContent class="min-w-0">
+                <div class="flex flex-wrap items-baseline gap-2">
+                  <span class="min-w-0 text-2xl font-semibold">{{ stat.healthy }}/{{ stat.total }}</span>
+                  <Badge v-if="stat.total - stat.healthy > 0" variant="destructive" class="shrink-0">{{ stat.total - stat.healthy }}</Badge>
+                  <Badge v-else-if="stat.total > 0" variant="secondary" class="shrink-0">OK</Badge>
                 </div>
               </CardContent>
             </Card>
