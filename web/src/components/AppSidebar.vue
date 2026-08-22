@@ -128,6 +128,10 @@ function goTo(kind: string) {
 function togglePin(kind: ResourceKind, event: Event) {
   event.stopPropagation()
   settings.togglePinned(kind)
+  // Sin esto, el botón se queda enfocado tras el click y la fila original se
+  // queda "atascada" mostrando el icono de pin en vez de volver al contador,
+  // ya que group-focus-within no se libera hasta que el foco se mueve.
+  ;(event.currentTarget as HTMLElement | null)?.blur()
 }
 </script>
 
@@ -173,7 +177,7 @@ function togglePin(kind: ResourceKind, event: Event) {
               >
                 {{ countFor(item.kind) }}
               </Badge>
-              <SidebarMenuAction show-on-hover :aria-label="$t('sidebar.unpin')" @click="togglePin(item.kind, $event)">
+              <SidebarMenuAction show-on-hover class="right-2" :aria-label="$t('sidebar.unpin')" @click="togglePin(item.kind, $event)">
                 <PinOffIcon />
               </SidebarMenuAction>
             </SidebarMenuItem>
@@ -202,6 +206,7 @@ function togglePin(kind: ResourceKind, event: Event) {
               </Badge>
               <SidebarMenuAction
                 show-on-hover
+                class="right-2"
                 :aria-label="settings.isPinned(item.kind) ? $t('sidebar.unpin') : $t('sidebar.pin')"
                 @click="togglePin(item.kind, $event)"
               >
@@ -233,6 +238,7 @@ function togglePin(kind: ResourceKind, event: Event) {
               </Badge>
               <SidebarMenuAction
                 show-on-hover
+                class="right-2"
                 :aria-label="settings.isPinned(item.kind) ? $t('sidebar.unpin') : $t('sidebar.pin')"
                 @click="togglePin(item.kind, $event)"
               >
