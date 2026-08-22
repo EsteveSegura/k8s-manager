@@ -20,7 +20,7 @@ router.get('/:context/resources', async (req, res) => {
     res.status(502).json({ error: errorMessage(err) });
     return;
   }
-  const { appsApi, coreApi, batchApi, networkingApi } = apis;
+  const { appsApi, coreApi, batchApi, networkingApi, autoscalingApi, policyApi } = apis;
 
   // Cada tipo de recurso se pide por separado: el usuario puede no tener permiso
   // de listar algunos (p.ej. Secrets o Nodes) en este contexto/clúster concreto,
@@ -40,6 +40,13 @@ router.get('/:context/resources', async (req, res) => {
     ['persistentvolumeclaims', () => coreApi.listPersistentVolumeClaimForAllNamespaces()],
     ['persistentvolumes', () => coreApi.listPersistentVolume()],
     ['nodes', () => coreApi.listNode()],
+    ['horizontalpodautoscalers', () => autoscalingApi.listHorizontalPodAutoscalerForAllNamespaces()],
+    ['namespaces', () => coreApi.listNamespace()],
+    ['resourcequotas', () => coreApi.listResourceQuotaForAllNamespaces()],
+    ['limitranges', () => coreApi.listLimitRangeForAllNamespaces()],
+    ['networkpolicies', () => networkingApi.listNetworkPolicyForAllNamespaces()],
+    ['endpoints', () => coreApi.listEndpointsForAllNamespaces()],
+    ['poddisruptionbudgets', () => policyApi.listPodDisruptionBudgetForAllNamespaces()],
   ];
 
   const results = await Promise.allSettled(RESOURCE_FETCHERS.map(([, fetcher]) => fetcher()));

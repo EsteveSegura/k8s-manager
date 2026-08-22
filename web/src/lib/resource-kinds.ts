@@ -1,7 +1,7 @@
 import type { ResourceKind } from '@/stores/cluster'
 
-// PersistentVolumes y Nodes son recursos de clúster, sin namespace propio.
-export const CLUSTER_SCOPED_KINDS: ResourceKind[] = ['persistentvolumes', 'nodes']
+// PersistentVolumes, Nodes y Namespaces son recursos de clúster, sin namespace propio.
+export const CLUSTER_SCOPED_KINDS: ResourceKind[] = ['persistentvolumes', 'nodes', 'namespaces']
 
 // Placeholder de namespace en la URL para recursos de clúster (un namespace real
 // de k8s nunca puede contener "_", así que no colisiona con nombres reales).

@@ -18,7 +18,7 @@ import { Separator } from '@/components/ui/separator'
 import { InboxIcon, RefreshCwIcon, XIcon, ArrowLeftIcon, ShieldAlertIcon, ScrollTextIcon, ArrowUpIcon, ArrowDownIcon } from '@lucide/vue'
 import { formatDateTime } from '@/lib/format'
 import { jobStatusLabel, jobStatusVariant } from '@/lib/job-status'
-import { podsForService } from '@/lib/k8s-relations'
+import { podsForService, podsForNetworkPolicy } from '@/lib/k8s-relations'
 import { resourcePath } from '@/lib/resource-kinds'
 import { parseCpu, parseMemory, formatCpu, formatMemory, percentOf } from '@/lib/k8s-quantities'
 import type { ResourceKind } from '@/stores/cluster'
@@ -36,6 +36,12 @@ const NAMESPACE_FILTERABLE_KINDS: ResourceKind[] = [
   'configmaps',
   'secrets',
   'persistentvolumeclaims',
+  'horizontalpodautoscalers',
+  'resourcequotas',
+  'limitranges',
+  'networkpolicies',
+  'endpoints',
+  'poddisruptionbudgets',
 ]
 
 const props = defineProps<{ kind: ResourceKind }>()
@@ -238,6 +244,42 @@ const sortAccessors = computed<Record<string, (item: any) => any>>(() => {
         memory: (item) => nodeMemoryUsageValue(item),
         pods: (item) => nodePodCount(item),
       }
+    case 'horizontalpodautoscalers':
+      return {
+        ...base,
+        target: (item) => hpaTargetLabel(item),
+        min: (item) => item.spec?.minReplicas ?? -1,
+        max: (item) => item.spec?.maxReplicas ?? -1,
+        current: (item) => item.status?.currentReplicas ?? -1,
+      }
+    case 'namespaces':
+      return {
+        ...base,
+        status: (item) => (item.status?.phase === 'Active' ? 1 : 0),
+        pods: (item) => namespacePodCount(item),
+      }
+    case 'resourcequotas':
+      return { ...base, limits: (item) => resourceQuotaLimitsCount(item) }
+    case 'limitranges':
+      return { ...base, limits: (item) => limitRangeLimitsCount(item) }
+    case 'networkpolicies':
+      return {
+        ...base,
+        types: (item) => networkPolicyTypesLabel(item),
+        affectedPods: (item) => networkPolicyAffectedPodsCount(item),
+      }
+    case 'endpoints':
+      return {
+        ...base,
+        ready: (item) => endpointsReadyCounts(item).ready,
+        notReady: (item) => endpointsReadyCounts(item).notReady,
+      }
+    case 'poddisruptionbudgets':
+      return {
+        ...base,
+        disruptionsAllowed: (item) => item.status?.disruptionsAllowed ?? -1,
+        healthy: (item) => item.status?.currentHealthy ?? -1,
+      }
     default:
       return base
   }
@@ -378,6 +420,51 @@ function nodeMemoryLabel(item: any) {
   const allocatable = parseMemory(item.status?.allocatable?.memory)
   const percent = percentOf(usage, allocatable)
   return percent === null ? formatMemory(usage) : `${formatMemory(usage)} (${percent}%)`
+}
+
+function hpaTargetLabel(item: any) {
+  const ref = item.spec?.scaleTargetRef
+  return ref ? `${ref.kind}/${ref.name}` : '-'
+}
+
+function hpaCurrentLabel(item: any) {
+  return `${item.status?.currentReplicas ?? 0}/${item.status?.desiredReplicas ?? 0}`
+}
+
+function namespacePhaseVariant(phase: string) {
+  return phase === 'Active' ? 'secondary' : 'destructive'
+}
+
+function namespacePodCount(item: any) {
+  const name = item.metadata?.name
+  return store.pods.filter((pod: any) => pod.metadata?.namespace === name).length
+}
+
+function resourceQuotaLimitsCount(item: any) {
+  return Object.keys(item.status?.hard || item.spec?.hard || {}).length
+}
+
+function limitRangeLimitsCount(item: any) {
+  return (item.spec?.limits || []).length
+}
+
+function networkPolicyTypesLabel(item: any) {
+  return (item.spec?.policyTypes || ['Ingress']).join(', ')
+}
+
+function networkPolicyAffectedPodsCount(item: any) {
+  return podsForNetworkPolicy(item, store.pods).length
+}
+
+function endpointsReadyCounts(item: any) {
+  const subsets = item.subsets || []
+  const ready = subsets.reduce((sum: number, s: any) => sum + (s.addresses?.length || 0), 0)
+  const notReady = subsets.reduce((sum: number, s: any) => sum + (s.notReadyAddresses?.length || 0), 0)
+  return { ready, notReady }
+}
+
+function pdbHealthyLabel(item: any) {
+  return `${item.status?.currentHealthy ?? 0}/${item.status?.expectedPods ?? 0}`
 }
 </script>
 
@@ -546,6 +633,57 @@ function nodeMemoryLabel(item: any) {
                     <TableHead v-if="kind === 'nodes'" class="cursor-pointer select-none hover:text-foreground" @click="setSort('pods')">
                       <span class="inline-flex items-center gap-1">{{ $t('resourceList.columns.pods') }}<component :is="sortIcon('pods')" v-if="sortIcon('pods')" class="size-3.5" /></span>
                     </TableHead>
+                    <TableHead v-if="kind === 'horizontalpodautoscalers'" class="cursor-pointer select-none hover:text-foreground" @click="setSort('target')">
+                      <span class="inline-flex items-center gap-1">{{ $t('resourceList.columns.target') }}<component :is="sortIcon('target')" v-if="sortIcon('target')" class="size-3.5" /></span>
+                    </TableHead>
+                    <TableHead v-if="kind === 'horizontalpodautoscalers'" class="cursor-pointer select-none hover:text-foreground" @click="setSort('min')">
+                      <span class="inline-flex items-center gap-1">{{ $t('describe.hpa.min') }}<component :is="sortIcon('min')" v-if="sortIcon('min')" class="size-3.5" /></span>
+                    </TableHead>
+                    <TableHead v-if="kind === 'horizontalpodautoscalers'" class="cursor-pointer select-none hover:text-foreground" @click="setSort('max')">
+                      <span class="inline-flex items-center gap-1">{{ $t('describe.hpa.max') }}<component :is="sortIcon('max')" v-if="sortIcon('max')" class="size-3.5" /></span>
+                    </TableHead>
+                    <TableHead v-if="kind === 'horizontalpodautoscalers'" class="cursor-pointer select-none hover:text-foreground" @click="setSort('current')">
+                      <span class="inline-flex items-center gap-1">{{ $t('describe.hpa.current') }}<component :is="sortIcon('current')" v-if="sortIcon('current')" class="size-3.5" /></span>
+                    </TableHead>
+                    <TableHead v-if="kind === 'namespaces'" class="cursor-pointer select-none hover:text-foreground" @click="setSort('status')">
+                      <span class="inline-flex items-center gap-1">{{ $t('resourceList.columns.status') }}<component :is="sortIcon('status')" v-if="sortIcon('status')" class="size-3.5" /></span>
+                    </TableHead>
+                    <TableHead v-if="kind === 'namespaces'" class="cursor-pointer select-none hover:text-foreground" @click="setSort('pods')">
+                      <span class="inline-flex items-center gap-1">{{ $t('resourceList.columns.pods') }}<component :is="sortIcon('pods')" v-if="sortIcon('pods')" class="size-3.5" /></span>
+                    </TableHead>
+                    <TableHead
+                      v-if="kind === 'resourcequotas' || kind === 'limitranges'"
+                      class="cursor-pointer select-none hover:text-foreground"
+                      @click="setSort('limits')"
+                    >
+                      <span class="inline-flex items-center gap-1">{{ $t('resourceList.columns.limits') }}<component :is="sortIcon('limits')" v-if="sortIcon('limits')" class="size-3.5" /></span>
+                    </TableHead>
+                    <TableHead v-if="kind === 'networkpolicies'" class="cursor-pointer select-none hover:text-foreground" @click="setSort('types')">
+                      <span class="inline-flex items-center gap-1">{{ $t('resourceList.columns.types') }}<component :is="sortIcon('types')" v-if="sortIcon('types')" class="size-3.5" /></span>
+                    </TableHead>
+                    <TableHead
+                      v-if="kind === 'networkpolicies'"
+                      class="cursor-pointer select-none hover:text-foreground"
+                      @click="setSort('affectedPods')"
+                    >
+                      <span class="inline-flex items-center gap-1">{{ $t('resourceList.columns.affectedPods') }}<component :is="sortIcon('affectedPods')" v-if="sortIcon('affectedPods')" class="size-3.5" /></span>
+                    </TableHead>
+                    <TableHead v-if="kind === 'endpoints'" class="cursor-pointer select-none hover:text-foreground" @click="setSort('ready')">
+                      <span class="inline-flex items-center gap-1">{{ $t('describe.endpoints.ready') }}<component :is="sortIcon('ready')" v-if="sortIcon('ready')" class="size-3.5" /></span>
+                    </TableHead>
+                    <TableHead v-if="kind === 'endpoints'" class="cursor-pointer select-none hover:text-foreground" @click="setSort('notReady')">
+                      <span class="inline-flex items-center gap-1">{{ $t('describe.endpoints.notReady') }}<component :is="sortIcon('notReady')" v-if="sortIcon('notReady')" class="size-3.5" /></span>
+                    </TableHead>
+                    <TableHead
+                      v-if="kind === 'poddisruptionbudgets'"
+                      class="cursor-pointer select-none hover:text-foreground"
+                      @click="setSort('disruptionsAllowed')"
+                    >
+                      <span class="inline-flex items-center gap-1">{{ $t('describe.pdb.disruptionsAllowed') }}<component :is="sortIcon('disruptionsAllowed')" v-if="sortIcon('disruptionsAllowed')" class="size-3.5" /></span>
+                    </TableHead>
+                    <TableHead v-if="kind === 'poddisruptionbudgets'" class="cursor-pointer select-none hover:text-foreground" @click="setSort('healthy')">
+                      <span class="inline-flex items-center gap-1">{{ $t('resourceList.columns.healthy') }}<component :is="sortIcon('healthy')" v-if="sortIcon('healthy')" class="size-3.5" /></span>
+                    </TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -601,6 +739,25 @@ function nodeMemoryLabel(item: any) {
                     <TableCell v-if="kind === 'nodes'" class="text-muted-foreground">{{ nodeCpuLabel(item) }}</TableCell>
                     <TableCell v-if="kind === 'nodes'" class="text-muted-foreground">{{ nodeMemoryLabel(item) }}</TableCell>
                     <TableCell v-if="kind === 'nodes'">{{ nodePodCount(item) }}</TableCell>
+                    <TableCell v-if="kind === 'horizontalpodautoscalers'" class="text-muted-foreground">{{ hpaTargetLabel(item) }}</TableCell>
+                    <TableCell v-if="kind === 'horizontalpodautoscalers'">{{ item.spec?.minReplicas ?? '-' }}</TableCell>
+                    <TableCell v-if="kind === 'horizontalpodautoscalers'">{{ item.spec?.maxReplicas ?? '-' }}</TableCell>
+                    <TableCell v-if="kind === 'horizontalpodautoscalers'">{{ hpaCurrentLabel(item) }}</TableCell>
+                    <TableCell v-if="kind === 'namespaces'">
+                      <Badge :variant="namespacePhaseVariant(item.status?.phase)">{{ item.status?.phase || 'Unknown' }}</Badge>
+                    </TableCell>
+                    <TableCell v-if="kind === 'namespaces'">{{ namespacePodCount(item) }}</TableCell>
+                    <TableCell v-if="kind === 'resourcequotas' || kind === 'limitranges'">
+                      {{ kind === 'resourcequotas' ? resourceQuotaLimitsCount(item) : limitRangeLimitsCount(item) }}
+                    </TableCell>
+                    <TableCell v-if="kind === 'networkpolicies'" class="text-muted-foreground">{{ networkPolicyTypesLabel(item) }}</TableCell>
+                    <TableCell v-if="kind === 'networkpolicies'">{{ networkPolicyAffectedPodsCount(item) }}</TableCell>
+                    <TableCell v-if="kind === 'endpoints'">{{ endpointsReadyCounts(item).ready }}</TableCell>
+                    <TableCell v-if="kind === 'endpoints'">{{ endpointsReadyCounts(item).notReady }}</TableCell>
+                    <TableCell v-if="kind === 'poddisruptionbudgets'">
+                      <Badge :variant="item.status?.disruptionsAllowed > 0 ? 'secondary' : 'destructive'">{{ item.status?.disruptionsAllowed ?? 0 }}</Badge>
+                    </TableCell>
+                    <TableCell v-if="kind === 'poddisruptionbudgets'">{{ pdbHealthyLabel(item) }}</TableCell>
                   </TableRow>
                 </TableBody>
               </Table>

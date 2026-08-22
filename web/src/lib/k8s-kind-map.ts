@@ -17,4 +17,11 @@ export const K8S_KIND_TO_RESOURCE_KIND: Partial<Record<string, ResourceKind>> = 
   PersistentVolumeClaim: 'persistentvolumeclaims',
   PersistentVolume: 'persistentvolumes',
   Node: 'nodes',
+  HorizontalPodAutoscaler: 'horizontalpodautoscalers',
+  Namespace: 'namespaces',
+  ResourceQuota: 'resourcequotas',
+  LimitRange: 'limitranges',
+  NetworkPolicy: 'networkpolicies',
+  Endpoints: 'endpoints',
+  PodDisruptionBudget: 'poddisruptionbudgets',
 }

@@ -22,6 +22,13 @@ export type ResourceKind =
   | 'persistentvolumeclaims'
   | 'persistentvolumes'
   | 'nodes'
+  | 'horizontalpodautoscalers'
+  | 'namespaces'
+  | 'resourcequotas'
+  | 'limitranges'
+  | 'networkpolicies'
+  | 'endpoints'
+  | 'poddisruptionbudgets'
 
 export interface SelectedResource {
   kind: ResourceKind
@@ -46,6 +53,13 @@ interface ClusterState {
   persistentvolumeclaims: any[]
   persistentvolumes: any[]
   nodes: any[]
+  horizontalpodautoscalers: any[]
+  namespaces: any[]
+  resourcequotas: any[]
+  limitranges: any[]
+  networkpolicies: any[]
+  endpoints: any[]
+  poddisruptionbudgets: any[]
   resourcesStatus: 'idle' | 'loading' | 'ready' | 'error'
   resourcesError: string | null
   resourceErrors: Partial<Record<ResourceKind, string>>
@@ -75,6 +89,12 @@ const NAMESPACED_KINDS: ResourceKind[] = [
   'configmaps',
   'secrets',
   'persistentvolumeclaims',
+  'horizontalpodautoscalers',
+  'resourcequotas',
+  'limitranges',
+  'networkpolicies',
+  'endpoints',
+  'poddisruptionbudgets',
 ]
 
 function namespaceFilterStorageKey(context: string): string {
@@ -99,6 +119,13 @@ export const useClusterStore = defineStore('cluster', {
     persistentvolumeclaims: [],
     persistentvolumes: [],
     nodes: [],
+    horizontalpodautoscalers: [],
+    namespaces: [],
+    resourcequotas: [],
+    limitranges: [],
+    networkpolicies: [],
+    endpoints: [],
+    poddisruptionbudgets: [],
     resourcesStatus: 'idle',
     resourcesError: null,
     resourceErrors: {},
@@ -132,6 +159,13 @@ export const useClusterStore = defineStore('cluster', {
         persistentvolumeclaims: state.persistentvolumeclaims,
         persistentvolumes: state.persistentvolumes,
         nodes: state.nodes,
+        horizontalpodautoscalers: state.horizontalpodautoscalers,
+        namespaces: state.namespaces,
+        resourcequotas: state.resourcequotas,
+        limitranges: state.limitranges,
+        networkpolicies: state.networkpolicies,
+        endpoints: state.endpoints,
+        poddisruptionbudgets: state.poddisruptionbudgets,
       }
       return byKind[kind]
     },
@@ -205,6 +239,13 @@ export const useClusterStore = defineStore('cluster', {
         this.persistentvolumeclaims = data.persistentvolumeclaims
         this.persistentvolumes = data.persistentvolumes
         this.nodes = data.nodes
+        this.horizontalpodautoscalers = data.horizontalpodautoscalers
+        this.namespaces = data.namespaces
+        this.resourcequotas = data.resourcequotas
+        this.limitranges = data.limitranges
+        this.networkpolicies = data.networkpolicies
+        this.endpoints = data.endpoints
+        this.poddisruptionbudgets = data.poddisruptionbudgets
         this.resourceErrors = data.errors || {}
         this.currentContext = context
         this.loadedForContext = context
@@ -313,6 +354,13 @@ export const useClusterStore = defineStore('cluster', {
       this.persistentvolumeclaims = []
       this.persistentvolumes = []
       this.nodes = []
+      this.horizontalpodautoscalers = []
+      this.namespaces = []
+      this.resourcequotas = []
+      this.limitranges = []
+      this.networkpolicies = []
+      this.endpoints = []
+      this.poddisruptionbudgets = []
       this.resourceErrors = {}
       this.resourcesStatus = 'idle'
       this.lastUpdatedAt = null

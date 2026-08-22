@@ -37,6 +37,13 @@ import {
   ShipWheelIcon,
   ActivityIcon,
   LayoutDashboardIcon,
+  GaugeIcon,
+  FolderIcon,
+  ScaleIcon,
+  SlidersHorizontalIcon,
+  ShieldIcon,
+  CableIcon,
+  UmbrellaIcon,
 } from '@lucide/vue'
 
 const store = useClusterStore()
@@ -70,6 +77,7 @@ const navGroups: { label: string; items: NavItem[] }[] = [
       { kind: 'jobs', label: 'Jobs', icon: ListChecksIcon },
       { kind: 'cronjobs', label: 'CronJobs', icon: CalendarClockIcon },
       { kind: 'pods', label: 'Pods', icon: ContainerIcon },
+      { kind: 'horizontalpodautoscalers', label: 'HorizontalPodAutoscalers', icon: GaugeIcon },
     ],
   },
   {
@@ -77,6 +85,8 @@ const navGroups: { label: string; items: NavItem[] }[] = [
     items: [
       { kind: 'services', label: 'Services', icon: NetworkIcon },
       { kind: 'ingresses', label: 'Ingress', icon: RouteIcon },
+      { kind: 'networkpolicies', label: 'NetworkPolicies', icon: ShieldIcon },
+      { kind: 'endpoints', label: 'Endpoints', icon: CableIcon },
     ],
   },
   {
@@ -86,6 +96,8 @@ const navGroups: { label: string; items: NavItem[] }[] = [
       { kind: 'secrets', label: 'Secrets', icon: KeyRoundIcon },
       { kind: 'persistentvolumeclaims', label: 'PersistentVolumeClaims', icon: SaveIcon },
       { kind: 'persistentvolumes', label: 'PersistentVolumes', icon: HardDriveIcon },
+      { kind: 'resourcequotas', label: 'ResourceQuotas', icon: ScaleIcon },
+      { kind: 'limitranges', label: 'LimitRanges', icon: SlidersHorizontalIcon },
     ],
   },
 ]
@@ -155,12 +167,34 @@ function goTo(kind: string) {
         <SidebarGroupContent>
           <SidebarMenu>
             <SidebarMenuItem>
+              <SidebarMenuButton :is-active="route.name === 'namespaces' || route.params.kind === 'namespaces'" tooltip="Namespaces" @click="goTo('namespaces')">
+                <FolderIcon />
+                <span>Namespaces</span>
+              </SidebarMenuButton>
+              <Badge variant="secondary" class="absolute right-2 top-1.5 group-data-[collapsible=icon]:hidden">
+                {{ countFor('namespaces') }}
+              </Badge>
+            </SidebarMenuItem>
+            <SidebarMenuItem>
               <SidebarMenuButton :is-active="route.name === 'nodes' || route.params.kind === 'nodes'" tooltip="Nodes" @click="goTo('nodes')">
                 <ServerIcon />
                 <span>Nodes</span>
               </SidebarMenuButton>
               <Badge variant="secondary" class="absolute right-2 top-1.5 group-data-[collapsible=icon]:hidden">
                 {{ countFor('nodes') }}
+              </Badge>
+            </SidebarMenuItem>
+            <SidebarMenuItem>
+              <SidebarMenuButton
+                :is-active="route.name === 'poddisruptionbudgets' || route.params.kind === 'poddisruptionbudgets'"
+                tooltip="PodDisruptionBudgets"
+                @click="goTo('poddisruptionbudgets')"
+              >
+                <UmbrellaIcon />
+                <span>PodDisruptionBudgets</span>
+              </SidebarMenuButton>
+              <Badge variant="secondary" class="absolute right-2 top-1.5 group-data-[collapsible=icon]:hidden">
+                {{ countFor('poddisruptionbudgets') }}
               </Badge>
             </SidebarMenuItem>
             <SidebarMenuItem>

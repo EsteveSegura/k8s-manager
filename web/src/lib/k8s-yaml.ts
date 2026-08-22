@@ -15,6 +15,13 @@ const API_VERSION_AND_KIND: Record<ResourceKind, { apiVersion: string; kind: str
   persistentvolumeclaims: { apiVersion: 'v1', kind: 'PersistentVolumeClaim' },
   persistentvolumes: { apiVersion: 'v1', kind: 'PersistentVolume' },
   nodes: { apiVersion: 'v1', kind: 'Node' },
+  horizontalpodautoscalers: { apiVersion: 'autoscaling/v2', kind: 'HorizontalPodAutoscaler' },
+  namespaces: { apiVersion: 'v1', kind: 'Namespace' },
+  resourcequotas: { apiVersion: 'v1', kind: 'ResourceQuota' },
+  limitranges: { apiVersion: 'v1', kind: 'LimitRange' },
+  networkpolicies: { apiVersion: 'networking.k8s.io/v1', kind: 'NetworkPolicy' },
+  endpoints: { apiVersion: 'v1', kind: 'Endpoints' },
+  poddisruptionbudgets: { apiVersion: 'policy/v1', kind: 'PodDisruptionBudget' },
 }
 
 // Los objetos que devuelve @kubernetes/client-node para un listado no siempre

@@ -33,6 +33,13 @@ import {
   PuzzleIcon,
   ShipWheelIcon,
   LayoutDashboardIcon,
+  GaugeIcon,
+  FolderIcon,
+  ScaleIcon,
+  SlidersHorizontalIcon,
+  ShieldIcon,
+  CableIcon,
+  UmbrellaIcon,
 } from '@lucide/vue'
 import type { ResourceKind } from '@/stores/cluster'
 
@@ -58,6 +65,13 @@ const groups: { kind: ResourceKind; label: string; icon: typeof BoxesIcon }[] = 
   { kind: 'persistentvolumeclaims', label: 'PersistentVolumeClaims', icon: SaveIcon },
   { kind: 'persistentvolumes', label: 'PersistentVolumes', icon: HardDriveIcon },
   { kind: 'nodes', label: 'Nodes', icon: ServerIcon },
+  { kind: 'horizontalpodautoscalers', label: 'HorizontalPodAutoscalers', icon: GaugeIcon },
+  { kind: 'namespaces', label: 'Namespaces', icon: FolderIcon },
+  { kind: 'resourcequotas', label: 'ResourceQuotas', icon: ScaleIcon },
+  { kind: 'limitranges', label: 'LimitRanges', icon: SlidersHorizontalIcon },
+  { kind: 'networkpolicies', label: 'NetworkPolicies', icon: ShieldIcon },
+  { kind: 'endpoints', label: 'Endpoints', icon: CableIcon },
+  { kind: 'poddisruptionbudgets', label: 'PodDisruptionBudgets', icon: UmbrellaIcon },
 ]
 
 function handleKeydown(event: KeyboardEvent) {

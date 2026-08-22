@@ -16,6 +16,8 @@ function createApis(contextName) {
     networkingApi: kc.makeApiClient(k8s.NetworkingV1Api),
     apiextensionsApi: kc.makeApiClient(k8s.ApiextensionsV1Api),
     customObjectsApi: kc.makeApiClient(k8s.CustomObjectsApi),
+    autoscalingApi: kc.makeApiClient(k8s.AutoscalingV2Api),
+    policyApi: kc.makeApiClient(k8s.PolicyV1Api),
   };
 }
 

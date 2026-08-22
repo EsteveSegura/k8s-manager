@@ -4,6 +4,16 @@ function matchesSelector(labels: Record<string, string> | undefined, selector: R
   return Object.entries(selector).every(([key, value]) => labels[key] === value)
 }
 
+// Un `podSelector: {}` (o sin `matchLabels`) en una NetworkPolicy significa "todos los
+// pods del namespace" (a diferencia del selector de Service/Deployment, donde vacío
+// significa "ninguno"). Recibe el LabelSelector completo, no solo `matchLabels`.
+function matchesPodSelector(labels: Record<string, string> | undefined, podSelector: { matchLabels?: Record<string, string> } | undefined) {
+  const matchLabels = podSelector?.matchLabels
+  if (!matchLabels || Object.keys(matchLabels).length === 0) return true
+  if (!labels) return false
+  return Object.entries(matchLabels).every(([key, value]) => labels[key] === value)
+}
+
 export function servicesForDeployment(deployment: any, services: any[]) {
   const namespace = deployment.metadata?.namespace
   const podLabels = deployment.spec?.template?.metadata?.labels
@@ -148,6 +158,51 @@ export function persistentVolumeClaimForVolume(pv: any, persistentVolumeClaims: 
       (pvc) => pvc.metadata?.namespace === claimRef.namespace && pvc.metadata?.name === claimRef.name,
     ) || null
   )
+}
+
+export function targetForHorizontalPodAutoscaler(hpa: any, deployments: any[], statefulsets: any[]) {
+  const ref = hpa.spec?.scaleTargetRef
+  const namespace = hpa.metadata?.namespace
+  if (!ref) return null
+  if (ref.kind === 'Deployment') return deployments.find((d) => d.metadata?.namespace === namespace && d.metadata?.name === ref.name) || null
+  if (ref.kind === 'StatefulSet') return statefulsets.find((s) => s.metadata?.namespace === namespace && s.metadata?.name === ref.name) || null
+  return null
+}
+
+export function resourceQuotasForNamespace(namespace: any, resourceQuotas: any[]) {
+  const name = namespace.metadata?.name
+  return resourceQuotas.filter((rq) => rq.metadata?.namespace === name)
+}
+
+export function limitRangesForNamespace(namespace: any, limitRanges: any[]) {
+  const name = namespace.metadata?.name
+  return limitRanges.filter((lr) => lr.metadata?.namespace === name)
+}
+
+export function podsForNamespace(namespace: any, pods: any[]) {
+  const name = namespace.metadata?.name
+  return pods.filter((pod) => pod.metadata?.namespace === name)
+}
+
+export function endpointsForService(service: any, endpointsList: any[]) {
+  const namespace = service.metadata?.namespace
+  const name = service.metadata?.name
+  return endpointsList.find((e) => e.metadata?.namespace === namespace && e.metadata?.name === name) || null
+}
+
+export function serviceForEndpoints(endpoints: any, services: any[]) {
+  const namespace = endpoints.metadata?.namespace
+  const name = endpoints.metadata?.name
+  return services.find((service) => service.metadata?.namespace === namespace && service.metadata?.name === name) || null
+}
+
+export function podsForNetworkPolicy(networkPolicy: any, pods: any[]) {
+  const namespace = networkPolicy.metadata?.namespace
+  return pods.filter((pod) => pod.metadata?.namespace === namespace && matchesPodSelector(pod.metadata?.labels, networkPolicy.spec?.podSelector))
+}
+
+export function podsForPodDisruptionBudget(pdb: any, pods: any[]) {
+  return podsForSelector(pdb.metadata?.namespace, pdb.spec?.selector?.matchLabels, pods)
 }
 
 export function servicesForIngress(ingress: any, services: any[]) {

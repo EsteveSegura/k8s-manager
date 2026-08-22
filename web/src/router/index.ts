@@ -22,6 +22,13 @@ const LIST_KINDS: ResourceKind[] = [
   'persistentvolumeclaims',
   'persistentvolumes',
   'nodes',
+  'horizontalpodautoscalers',
+  'namespaces',
+  'resourcequotas',
+  'limitranges',
+  'networkpolicies',
+  'endpoints',
+  'poddisruptionbudgets',
 ]
 
 const router = createRouter({
