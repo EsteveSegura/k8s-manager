@@ -13,6 +13,7 @@ import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Empty, EmptyHeader, EmptyTitle, EmptyDescription, EmptyMedia } from '@/components/ui/empty'
 import { Separator } from '@/components/ui/separator'
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import {
   ArrowLeftIcon,
   RefreshCwIcon,
@@ -240,7 +241,14 @@ function goToIssue(issue: Issue) {
               </CardHeader>
               <CardContent class="min-w-0">
                 <div class="flex items-baseline gap-2">
-                  <span class="min-w-0 truncate text-xl font-semibold" :title="`${stat.healthy}/${stat.total}`">{{ stat.healthy }}/{{ stat.total }}</span>
+                  <Tooltip>
+                    <TooltipTrigger as-child>
+                      <span class="min-w-0 truncate text-xl font-semibold">{{ stat.healthy }}/{{ stat.total }}</span>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>{{ stat.healthy }}/{{ stat.total }}</p>
+                    </TooltipContent>
+                  </Tooltip>
                   <Badge v-if="stat.total - stat.healthy > 0" variant="destructive" class="shrink-0">{{ stat.total - stat.healthy }}</Badge>
                   <Badge v-else-if="stat.total > 0" variant="secondary" class="shrink-0">OK</Badge>
                 </div>
