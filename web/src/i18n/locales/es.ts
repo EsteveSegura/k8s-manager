@@ -297,7 +297,6 @@ export default {
     title: 'Eventos',
     filterPlaceholder: 'Filtrar por objeto, motivo o mensaje...',
     loadErrorTitle: 'Error al cargar los eventos',
-    allNamespaces: 'Todos los namespaces',
     allTypes: 'Todos los tipos',
     columns: {
       lastSeen: 'Última vez',

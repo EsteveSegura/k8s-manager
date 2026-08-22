@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from 'vue'
-import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from 'vue-router'
 import { useIntervalFn } from '@vueuse/core'
 import { useClusterStore } from '@/stores/cluster'
@@ -8,17 +7,17 @@ import { useSettingsStore } from '@/stores/settings'
 import AppSidebar from '@/components/AppSidebar.vue'
 import AppBreadcrumb from '@/components/AppBreadcrumb.vue'
 import DescribePanel from '@/components/describe/DescribePanel.vue'
+import NamespaceFilter from '@/components/NamespaceFilter.vue'
 import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar'
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from '@/components/ui/resizable'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { InputGroup, InputGroupInput, InputGroupAddon, InputGroupButton } from '@/components/ui/input-group'
-import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuCheckboxItem, DropdownMenuSeparator } from '@/components/ui/dropdown-menu'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Empty, EmptyHeader, EmptyTitle, EmptyDescription, EmptyMedia } from '@/components/ui/empty'
 import { Separator } from '@/components/ui/separator'
-import { InboxIcon, RefreshCwIcon, XIcon, ArrowLeftIcon, ShieldAlertIcon, ScrollTextIcon, ListFilterIcon, ArrowUpIcon, ArrowDownIcon } from '@lucide/vue'
+import { InboxIcon, RefreshCwIcon, XIcon, ArrowLeftIcon, ShieldAlertIcon, ScrollTextIcon, ArrowUpIcon, ArrowDownIcon } from '@lucide/vue'
 import { formatDateTime } from '@/lib/format'
 import { jobStatusLabel, jobStatusVariant } from '@/lib/job-status'
 import { resourcePath } from '@/lib/resource-kinds'
@@ -46,7 +45,6 @@ const store = useClusterStore()
 const settings = useSettingsStore()
 const route = useRoute()
 const router = useRouter()
-const { t } = useI18n()
 
 const filterText = computed({
   get: () => store.filterText,
@@ -125,20 +123,6 @@ const filteredItems = computed(() => {
 })
 
 const showNamespaceFilter = computed(() => NAMESPACE_FILTERABLE_KINDS.includes(props.kind))
-const namespaceSelectedCount = computed(() => store.availableNamespaces.length - store.excludedNamespaces.length)
-const allNamespacesSelected = computed(() => store.excludedNamespaces.length === 0)
-const namespaceFilterLabel = computed(() => {
-  if (allNamespacesSelected.value) return t('resourceList.namespaceFilter.all')
-  return t('resourceList.namespaceFilter.selected', { count: namespaceSelectedCount.value, total: store.availableNamespaces.length })
-})
-
-function toggleAllNamespaces() {
-  if (allNamespacesSelected.value) {
-    store.setExcludedNamespaces(store.availableNamespaces.slice())
-  } else {
-    store.selectAllNamespaces()
-  }
-}
 
 const sortKey = ref<string | null>(null)
 const sortDir = ref<'asc' | 'desc'>('asc')
@@ -424,28 +408,7 @@ function nodeMemoryLabel(item: any) {
             {{ $t('common.updatedAt', { time: lastUpdatedLabel }) }}
           </span>
 
-          <DropdownMenu v-if="showNamespaceFilter">
-            <DropdownMenuTrigger as-child>
-              <Button variant="outline" size="sm" class="ml-auto shrink-0">
-                <ListFilterIcon data-icon="inline-start" />
-                <span class="hidden @md:inline">{{ namespaceFilterLabel }}</span>
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" class="w-56">
-              <DropdownMenuCheckboxItem :model-value="allNamespacesSelected" @select.prevent="toggleAllNamespaces">
-                {{ $t('resourceList.namespaceFilter.all') }}
-              </DropdownMenuCheckboxItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuCheckboxItem
-                v-for="ns in store.availableNamespaces"
-                :key="ns"
-                :model-value="!store.excludedNamespaces.includes(ns)"
-                @select.prevent="store.toggleNamespace(ns)"
-              >
-                {{ ns }}
-              </DropdownMenuCheckboxItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+          <NamespaceFilter v-if="showNamespaceFilter" />
         </div>
 
         <ResizablePanelGroup direction="horizontal" class="flex-1 rounded-lg border min-h-0">

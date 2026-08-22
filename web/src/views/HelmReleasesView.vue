@@ -6,6 +6,7 @@ import { resourcePath } from '@/lib/resource-kinds'
 import { formatDateTime } from '@/lib/format'
 import { K8S_KIND_TO_RESOURCE_KIND } from '@/lib/k8s-kind-map'
 import AppSidebar from '@/components/AppSidebar.vue'
+import NamespaceFilter from '@/components/NamespaceFilter.vue'
 import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar'
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from '@/components/ui/resizable'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
@@ -70,13 +71,25 @@ async function loadReleases() {
   }
 }
 
-onMounted(loadReleases)
-watch(context, loadReleases)
+function ensureResourcesLoaded() {
+  store.loadNamespaceFilter(context.value)
+  store.loadResources(context.value).catch(() => {})
+}
+
+onMounted(() => {
+  loadReleases()
+  ensureResourcesLoaded()
+})
+watch(context, () => {
+  loadReleases()
+  ensureResourcesLoaded()
+})
 
 const filteredReleases = computed(() => {
   const text = filterText.value.trim().toLowerCase()
-  if (!text) return releases.value
   return releases.value.filter((release) => {
+    if (!store.isNamespaceVisible(release.namespace)) return false
+    if (!text) return true
     const haystack = `${release.namespace}/${release.name} ${release.chart}`.toLowerCase()
     return haystack.includes(text)
   })
@@ -136,7 +149,7 @@ function goToResource(resourceRef: HelmResourceRef) {
       </header>
 
       <div class="flex min-w-0 flex-1 flex-col gap-3 p-4 min-h-0">
-        <div class="flex min-w-0 flex-wrap items-center gap-3">
+        <div class="@container flex min-w-0 flex-wrap items-center gap-3">
           <InputGroup class="max-w-sm">
             <InputGroupInput v-model="filterText" :placeholder="$t('helm.filterPlaceholder')" />
             <InputGroupAddon v-if="filterText" align="inline-end">
@@ -145,10 +158,11 @@ function goToResource(resourceRef: HelmResourceRef) {
               </InputGroupButton>
             </InputGroupAddon>
           </InputGroup>
-          <Button variant="outline" size="sm" :disabled="status === 'loading'" @click="loadReleases">
+          <Button variant="outline" size="sm" class="hidden shrink-0 @lg:inline-flex" :disabled="status === 'loading'" @click="loadReleases">
             <RefreshCwIcon data-icon="inline-start" />
             {{ $t('common.refresh') }}
           </Button>
+          <NamespaceFilter />
         </div>
 
         <ResizablePanelGroup direction="horizontal" class="flex-1 rounded-lg border min-h-0">

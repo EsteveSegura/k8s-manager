@@ -8,6 +8,7 @@ import { K8S_KIND_TO_RESOURCE_KIND } from '@/lib/k8s-kind-map'
 import { resourcePath } from '@/lib/resource-kinds'
 import { formatDateTime } from '@/lib/format'
 import AppSidebar from '@/components/AppSidebar.vue'
+import NamespaceFilter from '@/components/NamespaceFilter.vue'
 import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { InputGroup, InputGroupInput, InputGroupAddon, InputGroupButton } from '@/components/ui/input-group'
@@ -47,7 +48,6 @@ const events = ref<K8sEvent[]>([])
 const status = ref<'idle' | 'loading' | 'ready' | 'error'>('idle')
 const error = ref('')
 const filterText = ref('')
-const namespaceFilter = ref('all')
 const typeFilter = ref('all')
 
 async function loadEvents() {
@@ -68,6 +68,7 @@ async function loadEvents() {
 }
 
 function ensureResourcesLoaded() {
+  store.loadNamespaceFilter(context.value)
   store.loadResources(context.value).catch(() => {})
 }
 
@@ -96,21 +97,13 @@ function eventTimestamp(event: K8sEvent) {
   return event.lastTimestamp || event.eventTime || event.metadata.creationTimestamp || null
 }
 
-const namespaces = computed(() => {
-  const set = new Set<string>()
-  for (const event of events.value) {
-    if (event.involvedObject.namespace) set.add(event.involvedObject.namespace)
-  }
-  return [...set].sort()
-})
-
 const sortedEvents = computed(() =>
   [...events.value].sort((a, b) => new Date(eventTimestamp(b) || 0).getTime() - new Date(eventTimestamp(a) || 0).getTime()),
 )
 
 const filteredEvents = computed(() =>
   sortedEvents.value.filter((event) => {
-    if (namespaceFilter.value !== 'all' && event.involvedObject.namespace !== namespaceFilter.value) return false
+    if (!store.isNamespaceVisible(event.involvedObject.namespace)) return false
     if (typeFilter.value !== 'all' && event.type !== typeFilter.value) return false
     const text = filterText.value.trim().toLowerCase()
     if (!text) return true
@@ -158,7 +151,7 @@ function typeVariant(type: string) {
       </header>
 
       <div class="flex min-w-0 flex-1 flex-col gap-3 p-4 min-h-0">
-        <div class="flex min-w-0 flex-wrap items-center gap-3">
+        <div class="@container flex min-w-0 flex-wrap items-center gap-3">
           <InputGroup class="max-w-sm">
             <InputGroupInput v-model="filterText" :placeholder="$t('events.filterPlaceholder')" />
             <InputGroupAddon v-if="filterText" align="inline-end">
@@ -167,18 +160,6 @@ function typeVariant(type: string) {
               </InputGroupButton>
             </InputGroupAddon>
           </InputGroup>
-
-          <Select v-model="namespaceFilter">
-            <SelectTrigger class="w-48">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectGroup>
-                <SelectItem value="all">{{ $t('events.allNamespaces') }}</SelectItem>
-                <SelectItem v-for="namespace in namespaces" :key="namespace" :value="namespace">{{ namespace }}</SelectItem>
-              </SelectGroup>
-            </SelectContent>
-          </Select>
 
           <Select v-model="typeFilter">
             <SelectTrigger class="w-40">
@@ -193,14 +174,16 @@ function typeVariant(type: string) {
             </SelectContent>
           </Select>
 
-          <Button variant="outline" size="sm" :disabled="status === 'loading'" @click="loadEvents">
+          <Button variant="outline" size="sm" class="hidden shrink-0 @lg:inline-flex" :disabled="status === 'loading'" @click="loadEvents">
             <RefreshCwIcon data-icon="inline-start" :class="{ 'animate-spin': status === 'loading' }" />
             {{ $t('common.refresh') }}
           </Button>
 
-          <span v-if="settings.autoRefresh" class="shrink-0 text-xs text-muted-foreground">
+          <span v-if="settings.autoRefresh" class="hidden shrink-0 text-xs text-muted-foreground @xl:inline">
             {{ $t('common.autoRefreshActive') }}
           </span>
+
+          <NamespaceFilter />
         </div>
 
         <div class="min-w-0 flex-1 overflow-auto rounded-lg border">
