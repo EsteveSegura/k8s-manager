@@ -18,6 +18,7 @@ import { Separator } from '@/components/ui/separator'
 import { InboxIcon, RefreshCwIcon, XIcon, ArrowLeftIcon, ShieldAlertIcon, ScrollTextIcon, ArrowUpIcon, ArrowDownIcon } from '@lucide/vue'
 import { formatDateTime } from '@/lib/format'
 import { jobStatusLabel, jobStatusVariant } from '@/lib/job-status'
+import { podsForService } from '@/lib/k8s-relations'
 import { resourcePath } from '@/lib/resource-kinds'
 import { parseCpu, parseMemory, formatCpu, formatMemory, percentOf } from '@/lib/k8s-quantities'
 import type { ResourceKind } from '@/stores/cluster'
@@ -189,6 +190,7 @@ const sortAccessors = computed<Record<string, (item: any) => any>>(() => {
     case 'services':
       return {
         ...base,
+        replicas: (item) => serviceRunningPodsCount(item),
         type: (item) => item.spec?.type || '',
         ports: (item) => serviceExposure(item).ports,
       }
@@ -315,6 +317,15 @@ function serviceExposure(item: any) {
   const type = item.spec?.type || 'ClusterIP'
   const ports = (item.spec?.ports || []).map((p: any) => p.port).join(', ')
   return { type, ports }
+}
+
+function serviceRunningPodsCount(item: any) {
+  return podsForService(item, store.pods).filter((pod: any) => pod.status?.phase === 'Running').length
+}
+
+function serviceReplicasLabel(item: any) {
+  const total = podsForService(item, store.pods).length
+  return `${serviceRunningPodsCount(item)}/${total}`
 }
 
 function configMapKeysCount(item: any) {
@@ -469,6 +480,9 @@ function nodeMemoryLabel(item: any) {
                     <TableHead v-if="kind === 'cronjobs'" class="cursor-pointer select-none hover:text-foreground" @click="setSort('lastSchedule')">
                       <span class="inline-flex items-center gap-1">{{ $t('resourceList.columns.lastSchedule') }}<component :is="sortIcon('lastSchedule')" v-if="sortIcon('lastSchedule')" class="size-3.5" /></span>
                     </TableHead>
+                    <TableHead v-if="kind === 'services'" class="cursor-pointer select-none hover:text-foreground" @click="setSort('replicas')">
+                      <span class="inline-flex items-center gap-1">{{ $t('resourceList.columns.replicas') }}<component :is="sortIcon('replicas')" v-if="sortIcon('replicas')" class="size-3.5" /></span>
+                    </TableHead>
                     <TableHead v-if="kind === 'services'" class="cursor-pointer select-none hover:text-foreground" @click="setSort('type')">
                       <span class="inline-flex items-center gap-1">{{ $t('resourceList.columns.type') }}<component :is="sortIcon('type')" v-if="sortIcon('type')" class="size-3.5" /></span>
                     </TableHead>
@@ -557,6 +571,7 @@ function nodeMemoryLabel(item: any) {
                       </Badge>
                     </TableCell>
                     <TableCell v-if="kind === 'cronjobs'" class="text-muted-foreground">{{ cronJobLastScheduleLabel(item) }}</TableCell>
+                    <TableCell v-if="kind === 'services'">{{ serviceReplicasLabel(item) }}</TableCell>
                     <TableCell v-if="kind === 'services'">{{ serviceExposure(item).type }}</TableCell>
                     <TableCell v-if="kind === 'services'">{{ serviceExposure(item).ports }}</TableCell>
                     <TableCell v-if="kind === 'ingresses'" class="text-muted-foreground">{{ ingressHostsLabel(item) }}</TableCell>
