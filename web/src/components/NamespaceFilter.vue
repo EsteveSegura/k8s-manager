@@ -2,7 +2,8 @@
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useClusterStore } from '@/stores/cluster'
-import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuCheckboxItem, DropdownMenuSeparator } from '@/components/ui/dropdown-menu'
+import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuSeparator } from '@/components/ui/dropdown-menu'
+import { Checkbox } from '@/components/ui/checkbox'
 import { Button } from '@/components/ui/button'
 import { ListFilterIcon } from '@lucide/vue'
 
@@ -33,19 +34,16 @@ function toggleAllNamespaces() {
         <span class="hidden @md:inline">{{ namespaceFilterLabel }}</span>
       </Button>
     </DropdownMenuTrigger>
-    <DropdownMenuContent align="end" class="w-56">
-      <DropdownMenuCheckboxItem :model-value="allNamespacesSelected" @select.prevent="toggleAllNamespaces">
-        {{ $t('resourceList.namespaceFilter.all') }}
-      </DropdownMenuCheckboxItem>
+    <DropdownMenuContent align="end" class="w-56 max-h-80 overflow-y-auto">
+      <label class="flex min-w-0 cursor-pointer items-center gap-2 rounded-sm px-2 py-1.5 text-sm hover:bg-accent">
+        <Checkbox :model-value="allNamespacesSelected" @update:model-value="toggleAllNamespaces" />
+        <span class="truncate">{{ $t('resourceList.namespaceFilter.all') }}</span>
+      </label>
       <DropdownMenuSeparator />
-      <DropdownMenuCheckboxItem
-        v-for="ns in store.availableNamespaces"
-        :key="ns"
-        :model-value="!store.excludedNamespaces.includes(ns)"
-        @select.prevent="store.toggleNamespace(ns)"
-      >
-        {{ ns }}
-      </DropdownMenuCheckboxItem>
+      <label v-for="ns in store.availableNamespaces" :key="ns" class="flex min-w-0 cursor-pointer items-center gap-2 rounded-sm px-2 py-1.5 text-sm hover:bg-accent">
+        <Checkbox :model-value="!store.excludedNamespaces.includes(ns)" @update:model-value="() => store.toggleNamespace(ns)" />
+        <span class="truncate">{{ ns }}</span>
+      </label>
     </DropdownMenuContent>
   </DropdownMenu>
 </template>
