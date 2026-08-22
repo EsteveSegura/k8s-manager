@@ -72,7 +72,7 @@ export default {
     emptyTitle: 'No resource selected',
     emptyDescription: 'Click a row in the table to see its detail here.',
     viewLogs: 'View logs',
-    viewAllLogs: 'View logs from all pods',
+    viewAllLogs: 'View logs',
     envVarsLabel: 'Env vars:',
     eventsTitle: 'Recent events',
     eventsDescription: 'Latest events for this resource and its pods',
@@ -308,6 +308,8 @@ export default {
     ofLimit: '{percent}% of limit',
     noLimit: 'no limit',
     coverage: 'Metrics available for {available}/{total} pods',
+    currentSectionTitle: 'Current',
+    historySectionTitle: 'History',
   },
 
   chart: {

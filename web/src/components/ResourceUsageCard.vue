@@ -3,6 +3,7 @@ import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card'
 import { Progress } from '@/components/ui/progress'
+import { Separator } from '@/components/ui/separator'
 import { Empty, EmptyHeader, EmptyTitle, EmptyDescription } from '@/components/ui/empty'
 import UsageHistoryChart from '@/components/UsageHistoryChart.vue'
 import { formatCpu, formatMemory, percentOf } from '@/lib/k8s-quantities'
@@ -47,45 +48,55 @@ const coverageLabel = computed(() => {
         </EmptyHeader>
       </Empty>
 
-      <div class="flex min-w-0 flex-col gap-1.5">
-        <div class="flex items-center justify-between">
-          <span class="font-medium">CPU</span>
-          <span v-if="hasUsage" class="text-muted-foreground text-xs">
-            {{ $t('usage.inUse', { value: formatCpu(totals.cpuUsage) }) }}<span v-if="cpuUsagePercent !== null"> · {{ $t('usage.ofLimit', { percent: cpuUsagePercent }) }}</span>
-          </span>
+      <div class="flex flex-col gap-3">
+        <h3 class="text-muted-foreground text-xs font-medium tracking-wide uppercase">{{ $t('usage.currentSectionTitle') }}</h3>
+
+        <div class="flex min-w-0 flex-col gap-1.5">
+          <div class="flex items-center justify-between">
+            <span class="font-medium">CPU</span>
+            <span v-if="hasUsage" class="text-muted-foreground text-xs">
+              {{ $t('usage.inUse', { value: formatCpu(totals.cpuUsage) }) }}<span v-if="cpuUsagePercent !== null"> · {{ $t('usage.ofLimit', { percent: cpuUsagePercent }) }}</span>
+            </span>
+          </div>
+          <Progress v-if="hasUsage && cpuUsagePercent !== null" :model-value="cpuUsagePercent" />
+          <div class="text-muted-foreground flex flex-wrap gap-x-4 text-xs">
+            <span>Requests: {{ formatCpu(totals.cpuRequests) }}</span>
+            <span>Limits: {{ totals.cpuLimits > 0 ? formatCpu(totals.cpuLimits) : $t('usage.noLimit') }}</span>
+          </div>
         </div>
-        <Progress v-if="hasUsage && cpuUsagePercent !== null" :model-value="cpuUsagePercent" />
-        <div class="text-muted-foreground flex flex-wrap gap-x-4 text-xs">
-          <span>Requests: {{ formatCpu(totals.cpuRequests) }}</span>
-          <span>Limits: {{ totals.cpuLimits > 0 ? formatCpu(totals.cpuLimits) : $t('usage.noLimit') }}</span>
+
+        <div class="flex min-w-0 flex-col gap-1.5">
+          <div class="flex items-center justify-between">
+            <span class="font-medium">{{ $t('usage.memory') }}</span>
+            <span v-if="hasUsage" class="text-muted-foreground text-xs">
+              {{ $t('usage.inUse', { value: formatMemory(totals.memUsage) }) }}<span v-if="memUsagePercent !== null"> · {{ $t('usage.ofLimit', { percent: memUsagePercent }) }}</span>
+            </span>
+          </div>
+          <Progress v-if="hasUsage && memUsagePercent !== null" :model-value="memUsagePercent" />
+          <div class="text-muted-foreground flex flex-wrap gap-x-4 text-xs">
+            <span>Requests: {{ formatMemory(totals.memRequests) }}</span>
+            <span>Limits: {{ totals.memLimits > 0 ? formatMemory(totals.memLimits) : $t('usage.noLimit') }}</span>
+          </div>
         </div>
-        <UsageHistoryChart
-          v-if="hasUsage"
-          :points="cpuHistoryPoints"
-          :limit="totals.cpuLimits"
-          :format-value="formatCpu"
-        />
       </div>
 
-      <div class="flex min-w-0 flex-col gap-1.5">
-        <div class="flex items-center justify-between">
-          <span class="font-medium">{{ $t('usage.memory') }}</span>
-          <span v-if="hasUsage" class="text-muted-foreground text-xs">
-            {{ $t('usage.inUse', { value: formatMemory(totals.memUsage) }) }}<span v-if="memUsagePercent !== null"> · {{ $t('usage.ofLimit', { percent: memUsagePercent }) }}</span>
-          </span>
+      <template v-if="hasUsage">
+        <Separator />
+
+        <div class="flex flex-col gap-3">
+          <h3 class="text-muted-foreground text-xs font-medium tracking-wide uppercase">{{ $t('usage.historySectionTitle') }}</h3>
+
+          <div class="flex min-w-0 flex-col gap-1.5">
+            <span class="text-xs font-medium">CPU</span>
+            <UsageHistoryChart :points="cpuHistoryPoints" :limit="totals.cpuLimits" :format-value="formatCpu" />
+          </div>
+
+          <div class="flex min-w-0 flex-col gap-1.5">
+            <span class="text-xs font-medium">{{ $t('usage.memory') }}</span>
+            <UsageHistoryChart :points="memHistoryPoints" :limit="totals.memLimits" :format-value="formatMemory" />
+          </div>
         </div>
-        <Progress v-if="hasUsage && memUsagePercent !== null" :model-value="memUsagePercent" />
-        <div class="text-muted-foreground flex flex-wrap gap-x-4 text-xs">
-          <span>Requests: {{ formatMemory(totals.memRequests) }}</span>
-          <span>Limits: {{ totals.memLimits > 0 ? formatMemory(totals.memLimits) : $t('usage.noLimit') }}</span>
-        </div>
-        <UsageHistoryChart
-          v-if="hasUsage"
-          :points="memHistoryPoints"
-          :limit="totals.memLimits"
-          :format-value="formatMemory"
-        />
-      </div>
+      </template>
 
       <p v-if="coverageLabel" class="text-muted-foreground text-xs">{{ coverageLabel }}</p>
     </CardContent>
