@@ -169,7 +169,7 @@ function togglePin(kind: ResourceKind, event: Event) {
               </SidebarMenuButton>
               <Badge
                 variant="secondary"
-                class="absolute right-2 top-1.5 group-hover/menu-item:hidden group-data-[collapsible=icon]:hidden"
+                class="absolute right-2 top-1.5 group-hover/menu-item:hidden group-focus-within/menu-item:hidden group-data-[collapsible=icon]:hidden"
               >
                 {{ countFor(item.kind) }}
               </Badge>
@@ -196,7 +196,7 @@ function togglePin(kind: ResourceKind, event: Event) {
               </SidebarMenuButton>
               <Badge
                 variant="secondary"
-                class="absolute right-2 top-1.5 group-hover/menu-item:hidden group-data-[collapsible=icon]:hidden"
+                class="absolute right-2 top-1.5 group-hover/menu-item:hidden group-focus-within/menu-item:hidden group-data-[collapsible=icon]:hidden"
               >
                 {{ countFor(item.kind) }}
               </Badge>
@@ -227,7 +227,7 @@ function togglePin(kind: ResourceKind, event: Event) {
               </SidebarMenuButton>
               <Badge
                 variant="secondary"
-                class="absolute right-2 top-1.5 group-hover/menu-item:hidden group-data-[collapsible=icon]:hidden"
+                class="absolute right-2 top-1.5 group-hover/menu-item:hidden group-focus-within/menu-item:hidden group-data-[collapsible=icon]:hidden"
               >
                 {{ countFor(item.kind) }}
               </Badge>
