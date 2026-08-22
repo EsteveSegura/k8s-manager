@@ -168,7 +168,7 @@ function goTo(kind: string) {
       </SidebarGroup>
     </SidebarContent>
 
-    <SidebarFooter>
+    <SidebarFooter class="border-t border-sidebar-border bg-black/5 dark:bg-black/20">
       <SidebarMenu>
         <SidebarMenuItem>
           <SidebarMenuButton :tooltip="$t('common.settings')" @click="settingsDialog.open()">
