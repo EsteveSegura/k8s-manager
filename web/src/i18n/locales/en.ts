@@ -9,6 +9,8 @@ export default {
     settings: 'Settings',
     updatedAt: 'Updated at {time}',
     autoRefreshActive: 'Auto-refresh active',
+    copy: 'Copy',
+    copied: 'Copied',
   },
 
   sidebar: {
@@ -73,6 +75,8 @@ export default {
     emptyDescription: 'Click a row in the table to see its detail here.',
     viewLogs: 'View logs',
     viewAllLogs: 'View logs',
+    viewYaml: 'View YAML',
+    yamlDescription: 'Raw YAML as returned by the Kubernetes API',
     envVarsLabel: 'Env vars:',
     eventsTitle: 'Recent events',
     eventsDescription: 'Latest events for this resource and its pods',

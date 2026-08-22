@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, watch } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useIntervalFn } from '@vueuse/core'
 import { useClusterStore } from '@/stores/cluster'
@@ -7,6 +7,7 @@ import { useSettingsStore } from '@/stores/settings'
 import AppSidebar from '@/components/AppSidebar.vue'
 import AppBreadcrumb from '@/components/AppBreadcrumb.vue'
 import DescribePanel from '@/components/describe/DescribePanel.vue'
+import ResourceYamlDrawer from '@/components/ResourceYamlDrawer.vue'
 import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar'
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from '@/components/ui/resizable'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
@@ -16,10 +17,11 @@ import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Empty, EmptyHeader, EmptyTitle, EmptyDescription, EmptyMedia } from '@/components/ui/empty'
 import { Separator } from '@/components/ui/separator'
-import { InboxIcon, RefreshCwIcon, XIcon, ArrowLeftIcon, ShieldAlertIcon } from '@lucide/vue'
+import { InboxIcon, RefreshCwIcon, XIcon, ArrowLeftIcon, ShieldAlertIcon, CodeIcon } from '@lucide/vue'
 import { formatDateTime } from '@/lib/format'
 import { jobStatusLabel, jobStatusVariant } from '@/lib/job-status'
 import { resourcePath } from '@/lib/resource-kinds'
+import { resourceToYaml } from '@/lib/k8s-yaml'
 import { parseCpu, parseMemory, formatCpu, formatMemory, percentOf } from '@/lib/k8s-quantities'
 import type { ResourceKind } from '@/stores/cluster'
 
@@ -122,6 +124,12 @@ function closeDescribePanel() {
   store.clearSelection()
   router.push({ name: props.kind, params: { context: context.value } })
 }
+
+const yamlDrawerOpen = ref(false)
+const yamlText = computed(() => {
+  if (!store.selectedResource || !store.selectedResourceObject) return ''
+  return resourceToYaml(store.selectedResource.kind, store.selectedResourceObject)
+})
 
 function readyReplicasLabel(item: any) {
   const ready = item.status?.readyReplicas || 0
@@ -388,9 +396,15 @@ function nodeMemoryLabel(item: any) {
             <ResizablePanel :default-size="40" :min-size="25" class="flex min-w-0 min-h-0 flex-col">
               <div class="flex shrink-0 items-center justify-between gap-2 border-b p-2">
                 <span class="min-w-0 truncate text-sm font-medium">{{ store.selectedResource?.name }}</span>
-                <Button variant="ghost" size="icon-sm" :aria-label="$t('common.close')" @click="closeDescribePanel">
-                  <XIcon />
-                </Button>
+                <div class="flex shrink-0 items-center gap-1">
+                  <Button variant="ghost" size="sm" @click="yamlDrawerOpen = true">
+                    <CodeIcon data-icon="inline-start" />
+                    {{ $t('describe.viewYaml') }}
+                  </Button>
+                  <Button variant="ghost" size="icon-sm" :aria-label="$t('common.close')" @click="closeDescribePanel">
+                    <XIcon />
+                  </Button>
+                </div>
               </div>
               <div class="min-h-0 flex-1">
                 <DescribePanel />
@@ -401,4 +415,10 @@ function nodeMemoryLabel(item: any) {
       </div>
     </SidebarInset>
   </SidebarProvider>
+
+  <ResourceYamlDrawer
+    v-model:open="yamlDrawerOpen"
+    :title="store.selectedResource?.name || ''"
+    :yaml="yamlText"
+  />
 </template>
