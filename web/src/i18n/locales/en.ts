@@ -394,6 +394,7 @@ export default {
 
   dashboard: {
     title: 'Dashboard',
+    resourceErrorsTitle: 'Some resources failed to load',
     issuesTitle: 'Issues detected',
     issuesDescription: 'Resources that are not healthy or ready right now',
     noIssuesTitle: 'All clear',

@@ -14,6 +14,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { Empty, EmptyHeader, EmptyTitle, EmptyDescription, EmptyMedia } from '@/components/ui/empty'
 import { Separator } from '@/components/ui/separator'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
+import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert'
 import {
   ArrowLeftIcon,
   RefreshCwIcon,
@@ -25,6 +26,7 @@ import {
   LayersIcon,
   ListChecksIcon,
   CircleCheckIcon,
+  TriangleAlertIcon,
 } from '@lucide/vue'
 import { resourcePath } from '@/lib/resource-kinds'
 import {
@@ -83,6 +85,20 @@ watch(
 )
 
 const lastUpdatedLabel = computed(() => (store.lastUpdatedAt ? new Date(store.lastUpdatedAt).toLocaleTimeString() : null))
+
+// Un fallo de autenticación (p.ej. el token de gcloud caducado) afecta a los ~20
+// tipos de recurso a la vez con el mismo mensaje: agrupamos por mensaje en vez
+// de listar 20 veces el mismo error.
+const resourceErrorGroups = computed(() => {
+  const groups = new Map<string, string[]>()
+  for (const [kind, message] of Object.entries(store.resourceErrors)) {
+    if (!message) continue
+    const kinds = groups.get(message) || []
+    kinds.push(kind)
+    groups.set(message, kinds)
+  }
+  return Array.from(groups.entries()).map(([message, kinds]) => ({ message, kinds }))
+})
 
 interface StatCard {
   kind: HealthKind
@@ -231,6 +247,19 @@ function goToIssue(issue: Issue) {
         </Empty>
 
         <template v-else>
+          <Alert v-if="resourceErrorGroups.length" variant="destructive">
+            <TriangleAlertIcon />
+            <AlertTitle>{{ $t('dashboard.resourceErrorsTitle') }}</AlertTitle>
+            <AlertDescription>
+              <div class="flex flex-col gap-3">
+                <div v-for="group in resourceErrorGroups" :key="group.message" class="flex flex-col gap-0.5">
+                  <span class="font-medium text-foreground">{{ group.kinds.join(', ') }}</span>
+                  <span class="break-words">{{ group.message }}</span>
+                </div>
+              </div>
+            </AlertDescription>
+          </Alert>
+
           <div class="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
             <Card v-for="stat in stats" :key="stat.kind" class="min-w-0">
               <CardHeader class="pb-2">
