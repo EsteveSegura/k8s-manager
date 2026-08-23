@@ -9,7 +9,9 @@
     "start": "node index.js",
     "dev": "concurrently -n server,web -c blue,green \"npm --prefix server run dev\" \"npm --prefix web run dev\"",
     "dev:server": "npm --prefix server run dev",
-    "dev:web": "npm --prefix web run dev"
+    "dev:web": "npm --prefix web run dev",
+    "dev:demo": "concurrently -n server-test,web -c blue,green \"npm --prefix server-test run dev\" \"npm --prefix web run dev\"",
+    "dev:demo:server": "npm --prefix server-test run dev"
   },
   "devDependencies": {
     "concurrently": "^9.0.1"
