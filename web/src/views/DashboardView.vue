@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, watch } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from 'vue-router'
 import { useIntervalFn } from '@vueuse/core'
@@ -14,7 +14,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { Empty, EmptyHeader, EmptyTitle, EmptyDescription, EmptyMedia } from '@/components/ui/empty'
 import { Separator } from '@/components/ui/separator'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
-import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert'
+import { Alert, AlertTitle, AlertDescription, AlertAction } from '@/components/ui/alert'
 import {
   ArrowLeftIcon,
   RefreshCwIcon,
@@ -27,6 +27,7 @@ import {
   ListChecksIcon,
   CircleCheckIcon,
   TriangleAlertIcon,
+  XIcon,
 } from '@lucide/vue'
 import { resourcePath } from '@/lib/resource-kinds'
 import {
@@ -85,6 +86,17 @@ watch(
 )
 
 const lastUpdatedLabel = computed(() => (store.lastUpdatedAt ? new Date(store.lastUpdatedAt).toLocaleTimeString() : null))
+
+// sessionStorage, no localStorage: el aviso debe reaparecer si se cierra el
+// navegador/pestaña y se vuelve a abrir, solo se recuerda "cerrado" mientras
+// dura la sesión actual (recargas de página incluidas).
+const RESOURCE_ERRORS_DISMISSED_KEY = 'dashboard.resourceErrorsAlertDismissed'
+const resourceErrorsAlertDismissed = ref(sessionStorage.getItem(RESOURCE_ERRORS_DISMISSED_KEY) === 'true')
+
+function dismissResourceErrorsAlert() {
+  resourceErrorsAlertDismissed.value = true
+  sessionStorage.setItem(RESOURCE_ERRORS_DISMISSED_KEY, 'true')
+}
 
 // Un fallo de autenticación (p.ej. el token de gcloud caducado) afecta a los ~20
 // tipos de recurso a la vez con el mismo mensaje: agrupamos por mensaje en vez
@@ -247,7 +259,7 @@ function goToIssue(issue: Issue) {
         </Empty>
 
         <template v-else>
-          <Alert v-if="resourceErrorGroups.length" variant="destructive">
+          <Alert v-if="resourceErrorGroups.length && !resourceErrorsAlertDismissed" variant="destructive">
             <TriangleAlertIcon />
             <AlertTitle>{{ $t('dashboard.resourceErrorsTitle') }}</AlertTitle>
             <AlertDescription>
@@ -258,6 +270,11 @@ function goToIssue(issue: Issue) {
                 </div>
               </div>
             </AlertDescription>
+            <AlertAction>
+              <Button variant="ghost" size="icon-sm" :aria-label="$t('common.close')" @click="dismissResourceErrorsAlert">
+                <XIcon />
+              </Button>
+            </AlertAction>
           </Alert>
 
           <div class="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
