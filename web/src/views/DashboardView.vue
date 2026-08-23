@@ -214,6 +214,10 @@ const issues = computed<Issue[]>(() => {
 function goToIssue(issue: Issue) {
   router.push(resourcePath(context.value, issue.kind as ResourceKind, issue.namespace, issue.name))
 }
+
+function goToStat(kind: HealthKind) {
+  router.push(`/${context.value}/${kind}`)
+}
 </script>
 
 <template>
@@ -284,7 +288,12 @@ function goToIssue(issue: Issue) {
           </Alert>
 
           <div class="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
-            <Card v-for="stat in stats" :key="stat.kind" class="min-w-0">
+            <Card
+              v-for="stat in stats"
+              :key="stat.kind"
+              class="min-w-0 cursor-pointer transition-colors hover:bg-accent"
+              @click="goToStat(stat.kind)"
+            >
               <CardHeader class="pb-2">
                 <CardTitle class="flex items-center gap-2 text-sm font-medium text-muted-foreground">
                   <component :is="stat.icon" class="text-muted-foreground size-4 shrink-0" />
