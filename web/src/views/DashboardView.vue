@@ -271,7 +271,13 @@ function goToIssue(issue: Issue) {
               </div>
             </AlertDescription>
             <AlertAction>
-              <Button variant="ghost" size="icon-sm" :aria-label="$t('common.close')" @click="dismissResourceErrorsAlert">
+              <Button
+                variant="ghost"
+                size="icon-sm"
+                class="text-muted-foreground hover:text-foreground"
+                :aria-label="$t('common.close')"
+                @click="dismissResourceErrorsAlert"
+              >
                 <XIcon />
               </Button>
             </AlertAction>
