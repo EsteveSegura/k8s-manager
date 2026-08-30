@@ -1,8 +1,8 @@
 # k8s-manager
 
-<video src="https://github.com/EsteveSegura/k8s-manager/raw/main/demo.mp4" controls width="100%">
-  Your browser doesn't support inline video — <a href="https://github.com/EsteveSegura/k8s-manager/raw/main/demo.mp4">download the demo</a> instead.
-</video>
+![Demo](docs/demo.gif)
+
+*([full-quality video](docs/demo.mp4))*
 
 A read-only observability tool for Kubernetes clusters. It gives you a fast web UI to browse everything running in a cluster — Deployments, Services, Pods, StatefulSets, DaemonSets, Jobs/CronJobs, Ingresses, ConfigMaps/Secrets, PVs/PVCs, Nodes, CRDs, Helm releases, HPAs, Namespaces, NetworkPolicies, Endpoints and PodDisruptionBudgets — without ever creating, modifying, or deleting anything in the cluster.
 
