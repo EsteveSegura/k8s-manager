@@ -69,7 +69,7 @@ async function ensureLoaded() {
   try {
     await store.loadResources(context.value)
   } catch {
-    // el error se muestra vía store.resourcesError
+    // the error is shown via store.resourcesError
   }
   store.loadMetrics(context.value)
   store.loadNodeMetrics(context.value)
@@ -79,7 +79,7 @@ async function refreshNow() {
   try {
     await store.loadResources(context.value, { force: true })
   } catch {
-    // el error se muestra vía store.resourcesError
+    // the error is shown via store.resourcesError
   }
   store.loadMetrics(context.value, { force: true })
   store.loadNodeMetrics(context.value, { force: true })

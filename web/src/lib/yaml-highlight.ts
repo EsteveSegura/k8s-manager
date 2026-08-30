@@ -20,9 +20,9 @@ function classifyValue(raw: string): string {
   return STRING
 }
 
-// Resaltado heurístico línea a línea (no un parser YAML completo): suficiente
-// para distinguir claves/valores/listas de un YAML ya bien formado por
-// `yaml.stringify`, sin tener que añadir una librería de highlighting.
+// Heuristic line-by-line highlighting (not a full YAML parser): enough
+// to distinguish keys/values/lists in a YAML already well-formed by
+// `yaml.stringify`, without having to add a highlighting library.
 export function highlightYamlLine(line: string): YamlToken[] {
   if (/^\s*#/.test(line)) return [{ text: line, cls: 'text-muted-foreground italic' }]
   if (line.trim() === '---' || line.trim() === '...') return [{ text: line, cls: PUNCT }]

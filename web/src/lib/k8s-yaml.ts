@@ -24,10 +24,10 @@ const API_VERSION_AND_KIND: Record<ResourceKind, { apiVersion: string; kind: str
   poddisruptionbudgets: { apiVersion: 'policy/v1', kind: 'PodDisruptionBudget' },
 }
 
-// Los objetos que devuelve @kubernetes/client-node para un listado no siempre
-// traen apiVersion/kind rellenos (TypeMeta suele ir vacío en items de list),
-// así que los completamos a mano para que el YAML exportado sea fiel a lo que
-// devolvería `kubectl get -o yaml`.
+// The objects returned by @kubernetes/client-node for a list don't always
+// have apiVersion/kind filled in (TypeMeta is usually empty in list items),
+// so we fill them in by hand so the exported YAML is faithful to what
+// `kubectl get -o yaml` would return.
 export function resourceToYaml(kind: ResourceKind, resource: Record<string, unknown>): string {
   const fallback = API_VERSION_AND_KIND[kind]
   const ordered: Record<string, unknown> = {

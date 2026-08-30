@@ -14,8 +14,8 @@ export function isPodHealthy(pod: any): boolean {
   return statuses.every((cs: any) => cs.ready)
 }
 
-// Motivo técnico tal cual lo expondría `kubectl get pods`: fase si aún no está
-// Running, o el reason del container en espera (CrashLoopBackOff, ImagePullBackOff...).
+// Technical reason exactly as `kubectl get pods` would expose it: phase if not
+// yet Running, or the reason of the waiting container (CrashLoopBackOff, ImagePullBackOff...).
 export function podIssueReason(pod: any): string {
   const phase = pod.status?.phase
   if (phase !== 'Running') return phase || 'Unknown'

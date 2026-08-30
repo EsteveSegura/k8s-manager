@@ -1,7 +1,7 @@
 const { cpu, mem } = require('./helpers');
 
-// Hash estable de un string a un número en [0, 1) para asignar una fase por pod/nodo
-// (así cada uno oscila desfasado del resto, en vez de todos a la vez).
+// Stable hash of a string to a number in [0, 1) to assign a phase per pod/node
+// (this way each one oscillates out of phase with the rest, instead of all at once).
 function phaseFor(key) {
   let h = 0;
   for (let i = 0; i < key.length; i++) h = (h * 31 + key.charCodeAt(i)) % 100000;
@@ -31,15 +31,15 @@ function parseMemLimitMi(pod) {
   return 512;
 }
 
-// `image-processor` está deliberadamente cerca (a veces por encima) de su límite de CPU,
-// para que la gráfica de histórico de uso (UsageHistoryChart) muestre algo visualmente notable.
+// `image-processor` is deliberately close to (sometimes above) its CPU limit,
+// so that the usage history chart (UsageHistoryChart) shows something visually notable.
 const HOT_APP = 'image-processor';
 
 function buildPodMetrics(pods) {
   const items = [];
   for (const pod of pods) {
     const status = pod.status.containerStatuses?.[0];
-    if (!status || !status.ready) continue; // sin métricas para pods no-Running / no-ready, como el metrics-server real
+    if (!status || !status.ready) continue; // no metrics for non-Running / non-ready pods, like the real metrics-server
 
     const cpuLimitM = parseCpuLimit(pod);
     const memLimitMi = parseMemLimitMi(pod);

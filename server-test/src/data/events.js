@@ -48,14 +48,14 @@ function podStartupEvents(pod, ageMs) {
 function buildEvents(resources, meta) {
   const events = [];
 
-  // Startup normal para una muestra de pods sanos, para que la vista de Events tenga volumen "de fondo".
+  // Normal startup for a sample of healthy pods, so the Events view has "background" volume.
   const healthyPods = resources.pods.filter((p) => p.status.phase === 'Running' && p.status.containerStatuses?.[0]?.ready).slice(0, 22);
   for (const pod of healthyPods) {
     const ageMs = 5 * MINUTE + Math.floor(Math.random() * 110) * MINUTE;
     events.push(...podStartupEvents(pod, ageMs));
   }
 
-  // Pod en CrashLoopBackOff.
+  // Pod in CrashLoopBackOff.
   if (meta.crashloopPod) {
     const pod = meta.crashloopPod;
     const podRef = involvedObjectFor(pod, 'Pod');
@@ -70,7 +70,7 @@ function buildEvents(resources, meta) {
     );
   }
 
-  // Pod en ImagePullBackOff.
+  // Pod in ImagePullBackOff.
   if (meta.imagePullBackOffPod) {
     const pod = meta.imagePullBackOffPod;
     const podRef = involvedObjectFor(pod, 'Pod');
@@ -90,7 +90,7 @@ function buildEvents(resources, meta) {
     );
   }
 
-  // Pod pendiente sin recursos disponibles.
+  // Pod pending with no resources available.
   if (meta.pendingPod) {
     const pod = meta.pendingPod;
     const podRef = involvedObjectFor(pod, 'Pod');
@@ -107,7 +107,7 @@ function buildEvents(resources, meta) {
     );
   }
 
-  // Nodo NotReady.
+  // NotReady node.
   if (meta.notReadyNode) {
     const node = meta.notReadyNode;
     const nodeRef = involvedObjectFor(node, 'Node');
@@ -117,7 +117,7 @@ function buildEvents(resources, meta) {
     );
   }
 
-  // Job fallido.
+  // Failed job.
   if (meta.failedJob) {
     const job = meta.failedJob;
     const jobRef = involvedObjectFor(job, 'Job');
@@ -131,7 +131,7 @@ function buildEvents(resources, meta) {
     }
   }
 
-  // CronJobs: SuccessfulCreate para cada Job registrado.
+  // CronJobs: SuccessfulCreate for each registered Job.
   for (const job of resources.jobs) {
     const ownerRef = (job.metadata.ownerReferences || [])[0];
     if (!ownerRef) continue;
@@ -142,7 +142,7 @@ function buildEvents(resources, meta) {
     events.push(makeEvent({ involvedObject: cronRef, reason: 'SuccessfulCreate', message: `Created job ${job.metadata.name}`, ageMs: jobAgeMs, component: 'cronjob-controller' }));
   }
 
-  // HPA: un evento de reescalado para el worker bajo presión.
+  // HPA: a rescale event for the worker under pressure.
   const workerHpa = resources.horizontalpodautoscalers.find((h) => h.metadata.name === 'core-api-worker');
   if (workerHpa) {
     const hpaRef = involvedObjectFor(workerHpa, 'HorizontalPodAutoscaler');

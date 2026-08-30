@@ -16,9 +16,9 @@ function ip() {
   return `10.4.${randomInt(0, 3)}.${randomInt(2, 250)}`;
 }
 
-// Cada rol tiene una lista de plantillas (funciones) en vez de líneas fijas: cada
-// llamada genera valores distintos (ids, duraciones, ips...) para que dos pods del
-// mismo rol -o dos peticiones al mismo pod- no repitan exactamente el mismo log.
+// Each role has a list of templates (functions) instead of fixed lines: each
+// call generates different values (ids, durations, ips...) so that two pods of the
+// same role -or two requests to the same pod- don't repeat exactly the same log line.
 const ROLE_TEMPLATES = {
   api: [
     () => `level=info msg="incoming request" method=${pick(['GET', 'GET', 'POST'])} path=${pick(['/v1/health', '/v1/mix/render', '/v1/voices', '/v1/auth/refresh', '/v1/user/preferences', '/v1/presets', '/v1/session'])} status=${pick([200, 200, 200, 201, 204, 400, 404, 500])} duration_ms=${randomInt(2, 320)}`,
@@ -134,8 +134,8 @@ function templatesForRole(role) {
   return ROLE_TEMPLATES[strippedNumericSuffix] || ROLE_TEMPLATES.api;
 }
 
-// Elige la siguiente plantilla al azar evitando repetir la misma dos veces
-// seguidas, para que la ventana de log no se vea como un bucle robótico.
+// Picks the next template at random, avoiding repeating the same one twice
+// in a row, so the log window doesn't look like a robotic loop.
 function nextTemplateIndex(templates, lastIndex) {
   if (templates.length === 1) return 0;
   let index = lastIndex;
@@ -147,8 +147,8 @@ function formatLine(text, timeMs, timestamps) {
   return timestamps ? `${new Date(timeMs).toISOString()} ${text}` : text;
 }
 
-// Lanza un error con `code`/`message` imitando lo que hace @kubernetes/client-node
-// cuando el contenedor nunca ha llegado a arrancar (`readNamespacedPodLog` devuelve 400).
+// Throws an error with `code`/`message` mimicking what @kubernetes/client-node does
+// when the container has never managed to start (`readNamespacedPodLog` returns 400).
 class PodLogError extends Error {
   constructor(code, message) {
     super(message);

@@ -3,8 +3,8 @@ const { createApis, errorMessage } = require('../k8s');
 
 const router = Router();
 
-// Los Secrets nunca deben llegar al frontend con su contenido: solo se envían
-// sus nombres de clave, nunca `data`/`stringData`.
+// Secrets must never reach the frontend with their content: only their key
+// names are sent, never `data`/`stringData`.
 function redactSecret(secret) {
   const { data, stringData, ...rest } = secret;
   return { ...rest, dataKeys: Object.keys(data || stringData || {}) };
@@ -22,10 +22,10 @@ router.get('/:context/resources', async (req, res) => {
   }
   const { appsApi, coreApi, batchApi, networkingApi, autoscalingApi, policyApi } = apis;
 
-  // Cada tipo de recurso se pide por separado: el usuario puede no tener permiso
-  // de listar algunos (p.ej. Secrets o Nodes) en este contexto/clúster concreto,
-  // y eso no debe romper el resto de pestañas. Con Promise.all, un solo 403
-  // (p.ej. secrets) tiraba abajo TODA la respuesta y dejaba la app entera sin datos.
+  // Each resource type is requested separately: the user might not have permission
+  // to list some of them (e.g. Secrets or Nodes) in this particular context/cluster,
+  // and that shouldn't break the rest of the tabs. With Promise.all, a single 403
+  // (e.g. secrets) brought down the ENTIRE response and left the whole app with no data.
   const RESOURCE_FETCHERS = [
     ['deployments', () => appsApi.listDeploymentForAllNamespaces()],
     ['services', () => coreApi.listServiceForAllNamespaces()],

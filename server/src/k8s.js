@@ -27,11 +27,11 @@ function createMetricsClient(contextName) {
   return new k8s.Metrics(kc);
 }
 
-// El mensaje útil de un error de la API de k8s (p.ej. "secrets is forbidden: ...")
-// vive en `err.body.message`, no en `err.message` (que suele ser solo "Unknown API Status Code!").
-// `err.body` puede llegar como objeto ya parseado o como el JSON crudo en texto, según el código de estado.
+// The useful message from a k8s API error (e.g. "secrets is forbidden: ...")
+// lives in `err.body.message`, not `err.message` (which is usually just "Unknown API Status Code!").
+// `err.body` can arrive as an already-parsed object or as raw JSON text, depending on the status code.
 function errorMessage(err) {
-  if (!err) return 'Error desconocido';
+  if (!err) return 'Unknown error';
   let { body } = err;
   if (typeof body === 'string') {
     try {
@@ -40,7 +40,7 @@ function errorMessage(err) {
       body = null;
     }
   }
-  return (body && body.message) || err.message || 'Error desconocido';
+  return (body && body.message) || err.message || 'Unknown error';
 }
 
 module.exports = { loadKubeConfig, createApis, createMetricsClient, errorMessage };

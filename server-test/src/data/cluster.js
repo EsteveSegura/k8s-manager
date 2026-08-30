@@ -242,7 +242,7 @@ function buildCronJob({ name, namespace, schedule, lastScheduleMs }) {
 }
 
 // ---------------------------------------------------------------------------
-// Ensamblado completo de un cluster demo
+// Full assembly of a demo cluster
 // ---------------------------------------------------------------------------
 
 function buildCluster(profile) {
@@ -406,9 +406,9 @@ function buildCluster(profile) {
     for (let i = 0; i < count; i++) {
       const pair = buildPvcPv({ namePrefix: prefix, namespace: ns, ordinal: i, storageGi });
       pvcPvPairs.push(pair);
-      // El pod ordinal `i` de un StatefulSet monta el PVC generado a partir de su volumeClaimTemplate
-      // con este mismo nombre (`<template>-<statefulset>-<ordinal>`) — necesario para que
-      // `podsForPersistentVolumeClaim` (k8s-relations.ts) encuentre el pod correcto.
+      // The ordinal pod `i` of a StatefulSet mounts the PVC generated from its volumeClaimTemplate
+      // with this same name (`<template>-<statefulset>-<ordinal>`) — necessary so that
+      // `podsForPersistentVolumeClaim` (k8s-relations.ts) finds the correct pod.
       const pod = statefulPods[i];
       if (pod) pod.spec.volumes = [{ name: 'data', persistentVolumeClaim: { claimName: pair.pvc.metadata.name } }];
     }

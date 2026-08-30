@@ -1,10 +1,10 @@
 import type { ResourceKind } from '@/stores/cluster'
 
-// PersistentVolumes, Nodes y Namespaces son recursos de clúster, sin namespace propio.
+// PersistentVolumes, Nodes and Namespaces are cluster-scoped resources, with no namespace of their own.
 export const CLUSTER_SCOPED_KINDS: ResourceKind[] = ['persistentvolumes', 'nodes', 'namespaces']
 
-// Placeholder de namespace en la URL para recursos de clúster (un namespace real
-// de k8s nunca puede contener "_", así que no colisiona con nombres reales).
+// Namespace placeholder in the URL for cluster-scoped resources (a real k8s
+// namespace can never contain "_", so it never collides with real names).
 export const NO_NAMESPACE = '_'
 
 export function isClusterScoped(kind: ResourceKind): boolean {

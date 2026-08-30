@@ -130,9 +130,9 @@ function goTo(kind: string) {
 function togglePin(kind: ResourceKind, event: Event) {
   event.stopPropagation()
   settings.togglePinned(kind)
-  // Sin esto, el botón se queda enfocado tras el click y la fila original se
-  // queda "atascada" mostrando el icono de pin en vez de volver al contador,
-  // ya que group-focus-within no se libera hasta que el foco se mueve.
+  // Without this, the button stays focused after the click and the original row
+  // gets "stuck" showing the pin icon instead of reverting to the counter,
+  // since group-focus-within isn't released until focus moves.
   ;(event.currentTarget as HTMLElement | null)?.blur()
 }
 

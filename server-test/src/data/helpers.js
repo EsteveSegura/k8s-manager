@@ -12,7 +12,7 @@ function nextResourceVersion() {
   return String(resourceVersionCounter);
 }
 
-// Timestamp ISO relativo al arranque del proceso, `msAgo` milisegundos atrás.
+// ISO timestamp relative to the process startup, `msAgo` milliseconds ago.
 function isoAgo(msAgo) {
   return new Date(START_TIME - msAgo).toISOString();
 }

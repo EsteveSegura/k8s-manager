@@ -20,7 +20,7 @@ function nodeInternalIp(index) {
 }
 
 // ---------------------------------------------------------------------------
-// Nodos
+// Nodes
 // ---------------------------------------------------------------------------
 
 function buildNode({ name, pool, ready }, index) {
@@ -143,9 +143,9 @@ function buildContainerStatus({ name, image, special, restartAgeMs }) {
   };
 }
 
-// Genera los pods de un "app" (Deployment/StatefulSet/DaemonSet). `specialByIndex`
-// permite forzar algún pod concreto a un estado no sano (crashloop/imagepullbackoff/pending)
-// para alimentar la demo de Dashboard/Events/Logs.
+// Generates the pods of an "app" (Deployment/StatefulSet/DaemonSet). `specialByIndex`
+// allows forcing a specific pod into an unhealthy state (crashloop/imagepullbackoff/pending)
+// to feed the Dashboard/Events/Logs demo.
 function buildPods({ ownerName, namespace, replicas, image, port, cpuRequest, cpuLimit, memRequest, memLimit, env, envFrom, volumes, volumeMounts, nodeNames, ipCounter, extraLabels = {}, specialByIndex = {}, statefulOrdinals = false }) {
   const labels = { ...labelsFor(ownerName, namespace), ...extraLabels };
   const pods = [];

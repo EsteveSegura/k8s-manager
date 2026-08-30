@@ -88,9 +88,9 @@ watch(
 
 const lastUpdatedLabel = computed(() => (store.lastUpdatedAt ? new Date(store.lastUpdatedAt).toLocaleTimeString() : null))
 
-// sessionStorage, no localStorage: el aviso debe reaparecer si se cierra el
-// navegador/pestaña y se vuelve a abrir, solo se recuerda "cerrado" mientras
-// dura la sesión actual (recargas de página incluidas).
+// sessionStorage, not localStorage: the notice should reappear if the
+// browser/tab is closed and reopened, only remembered as "dismissed" for
+// the current session (page reloads included).
 const RESOURCE_ERRORS_DISMISSED_KEY = 'dashboard.resourceErrorsAlertDismissed'
 const resourceErrorsAlertDismissed = ref(sessionStorage.getItem(RESOURCE_ERRORS_DISMISSED_KEY) === 'true')
 
@@ -99,9 +99,9 @@ function dismissResourceErrorsAlert() {
   sessionStorage.setItem(RESOURCE_ERRORS_DISMISSED_KEY, 'true')
 }
 
-// Un fallo de autenticación (p.ej. el token de gcloud caducado) afecta a los ~20
-// tipos de recurso a la vez con el mismo mensaje: agrupamos por mensaje en vez
-// de listar 20 veces el mismo error.
+// An authentication failure (e.g. an expired gcloud token) affects ~20
+// resource types at once with the same message: we group by message instead
+// of listing the same error 20 times.
 const resourceErrorGroups = computed(() => {
   const groups = new Map<string, string[]>()
   for (const [kind, message] of Object.entries(store.resourceErrors)) {

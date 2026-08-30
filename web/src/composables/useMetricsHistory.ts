@@ -10,9 +10,9 @@ export interface HistoryPoint {
 const MAX_POINTS = 90
 
 /**
- * Acumula en memoria (se pierde al recargar) una muestra cada vez que llegan
- * métricas nuevas del snapshot de metrics-server, para poder graficar una
- * ventana reciente sin depender de ningún backend de histórico externo.
+ * Accumulates in memory (lost on reload) a sample every time new metrics
+ * arrive from the metrics-server snapshot, so a recent window can be
+ * charted without depending on any external history backend.
  */
 export function useMetricsHistory(getTotals: () => { cpuUsage: number; memUsage: number; podsWithUsage: number } | null) {
   const store = useClusterStore()

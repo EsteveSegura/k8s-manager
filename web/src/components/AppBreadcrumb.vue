@@ -101,8 +101,8 @@ const finalCrumb = computed<Crumb | null>(() => {
   return { label: resourceName.value, kindShort: KIND_SHORT[kind.value] }
 })
 
-// Todos los tramos del breadcrumb en orden, del contexto al recurso actual.
-// El último no lleva `href`: es la página activa (BreadcrumbPage).
+// All breadcrumb segments in order, from the context to the current resource.
+// The last one has no `href`: it's the active page (BreadcrumbPage).
 const allCrumbs = computed<Crumb[]>(() => {
   const list: Crumb[] = [{ label: context.value, href: `/${context.value}/dashboard` }]
   if (!resourceName.value) {
@@ -113,9 +113,9 @@ const allCrumbs = computed<Crumb[]>(() => {
   return list
 })
 
-// Cuando hay más tramos de los que caben con comodidad, se colapsan los
-// intermedios detrás de un "..." con menú (accesible por teclado), dejando
-// siempre visibles el primero y los dos últimos.
+// When there are more segments than comfortably fit, the intermediate ones
+// are collapsed behind a "..." with a menu (keyboard-accessible), always
+// keeping the first and the last two visible.
 const VISIBLE_TAIL = 2
 const collapsedCrumbs = computed<Crumb[]>(() => {
   const all = allCrumbs.value

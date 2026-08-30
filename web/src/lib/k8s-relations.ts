@@ -4,9 +4,9 @@ function matchesSelector(labels: Record<string, string> | undefined, selector: R
   return Object.entries(selector).every(([key, value]) => labels[key] === value)
 }
 
-// Un `podSelector: {}` (o sin `matchLabels`) en una NetworkPolicy significa "todos los
-// pods del namespace" (a diferencia del selector de Service/Deployment, donde vacío
-// significa "ninguno"). Recibe el LabelSelector completo, no solo `matchLabels`.
+// A `podSelector: {}` (or without `matchLabels`) in a NetworkPolicy means "all
+// pods in the namespace" (unlike the Service/Deployment selector, where empty
+// means "none"). Receives the full LabelSelector, not just `matchLabels`.
 function matchesPodSelector(labels: Record<string, string> | undefined, podSelector: { matchLabels?: Record<string, string> } | undefined) {
   const matchLabels = podSelector?.matchLabels
   if (!matchLabels || Object.keys(matchLabels).length === 0) return true

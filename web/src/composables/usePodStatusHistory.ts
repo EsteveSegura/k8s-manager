@@ -11,10 +11,10 @@ export interface PodStatusPoint {
 const MAX_POINTS = 90
 
 /**
- * Igual que useMetricsHistory pero para el estado del pod: acumula en memoria
- * (se pierde al recargar) una muestra cada vez que se refrescan los recursos,
- * para poder ver si el pod ha reiniciado o entrado en CrashLoopBackOff en la
- * ventana reciente, no solo su estado actual.
+ * Same as useMetricsHistory but for pod status: accumulates in memory
+ * (lost on reload) a sample every time resources are refreshed, so we can
+ * see whether the pod has restarted or entered CrashLoopBackOff in the
+ * recent window, not just its current status.
  */
 export function usePodStatusHistory(getStatus: () => PodStatusPoint | null) {
   const store = useClusterStore()

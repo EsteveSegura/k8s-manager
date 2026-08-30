@@ -184,8 +184,8 @@ export const useClusterStore = defineStore('cluster', {
     selectedResourceObject(): any | null {
       if (!this.selectedResource) return null
       const { kind, namespace, name } = this.selectedResource
-      // Los recursos de clúster (PersistentVolumes, Nodes) no tienen namespace real:
-      // si el propio recurso no tiene namespace, basta con hacer match por nombre.
+      // Cluster-scoped resources (PersistentVolumes, Nodes) don't have a real namespace:
+      // if the resource itself has no namespace, matching by name alone is enough.
       return (
         this.resourcesByKind(kind).find(
           (item: any) => item.metadata?.name === name && (item.metadata?.namespace == null || item.metadata?.namespace === namespace),

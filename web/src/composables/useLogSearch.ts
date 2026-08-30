@@ -23,8 +23,8 @@ export function useLogSearch(sourceText: Ref<string>) {
   watch(query, (value) => {
     if (debounceTimer) clearTimeout(debounceTimer)
     if (!value) {
-      // Un campo vacío limpia el resaltado al instante; solo el cómputo de
-      // coincidencias (potencialmente costoso sobre logs largos) se retrasa.
+      // An empty field clears the highlighting instantly; only the computation of
+      // matches (potentially expensive on long logs) is delayed.
       debouncedQuery.value = ''
       return
     }
@@ -77,11 +77,10 @@ export function useLogSearch(sourceText: Ref<string>) {
     return result
   })
 
-  // El nodo <mark> de la coincidencia activa se registra en cada render (vía
-  // registerMatchRef), pero solo se hace scroll hasta él cuando el usuario pide
-  // explícitamente "siguiente"/"anterior" — nunca como efecto secundario de un
-  // render cualquiera, que es lo que antes hacía que el scroll manual del
-  // usuario se deshiciera solo.
+  // The <mark> node for the active match is registered on every render (via
+  // registerMatchRef), but we only scroll to it when the user explicitly asks
+  // for "next"/"previous" — never as a side effect of an arbitrary render,
+  // which is what used to make the user's manual scroll undo itself.
   let activeMatchEl: Element | null = null
 
   function registerMatchRef(el: Element | null, isActive: boolean) {

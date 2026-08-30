@@ -14,7 +14,7 @@ async function listResources(contextName) {
     coreApi.listPodForAllNamespaces(),
   ]);
 
-  console.log(`\n=== Contexto: ${contextName} ===`);
+  console.log(`\n=== Context: ${contextName} ===`);
 
   console.log(`\nDeployments (${deployments.items.length}):`);
   deployments.items.forEach((d) => {
@@ -40,7 +40,7 @@ async function main() {
   const contexts = kc.getContexts().filter((c) => !filter || c.name.includes(filter));
 
   if (contexts.length === 0) {
-    console.error(`No hay ningún contexto que coincida con "${filter}"`);
+    console.error(`No context matches "${filter}"`);
     process.exit(1);
   }
 
@@ -48,8 +48,8 @@ async function main() {
     try {
       await listResources(context.name);
     } catch (err) {
-      console.error(`\n=== Contexto: ${context.name} ===`);
-      console.error(`  Error al conectar: ${err.message}`);
+      console.error(`\n=== Context: ${context.name} ===`);
+      console.error(`  Error connecting: ${err.message}`);
     }
   }
 }

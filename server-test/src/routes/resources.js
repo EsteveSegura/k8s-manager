@@ -3,8 +3,8 @@ const { getCluster } = require('../data/store');
 
 const router = Router();
 
-// Igual que en `server/src/routes/resources.js`: los Secrets nunca llegan al
-// frontend con su contenido, solo los nombres de sus claves.
+// Same as in `server/src/routes/resources.js`: Secrets never reach the
+// frontend with their content, only the names of their keys.
 function redactSecret(secret) {
   const { data, stringData, ...rest } = secret;
   return { ...rest, dataKeys: Object.keys(data || stringData || {}) };

@@ -27,10 +27,10 @@ export function useLogScroll() {
     await nextTick()
     attach()
     if (wasAtBottom) {
-      // El snapshot de logs sustituye todo el contenido en cada refresco (ventana
-      // deslizante), así que aunque no movamos el scroll, la altura puede cambiar
-      // y "desanclarnos" del final. Si ya estábamos siguiendo el tail, nos
-      // reanclamos para que no parezca que el scroll sube solo.
+      // The log snapshot replaces all content on every refresh (sliding
+      // window), so even if we don't move the scroll, the height can change
+      // and "unanchor" us from the end. If we were already following the tail,
+      // we re-anchor so it doesn't look like the scroll moves on its own.
       scrollToBottom(scrollAreaRef.value)
       isAtBottom.value = true
     } else {

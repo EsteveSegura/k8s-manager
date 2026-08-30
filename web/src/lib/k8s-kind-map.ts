@@ -1,8 +1,8 @@
 import type { ResourceKind } from '@/stores/cluster'
 
-// Traduce el `kind` literal de la API de k8s (como aparece en events, manifests
-// de Helm, ownerReferences...) al ResourceKind interno de la app, solo para los
-// kinds que la app sabe navegar. Los que no están aquí se muestran como texto plano.
+// Translates the literal `kind` from the k8s API (as it appears in events, Helm
+// manifests, ownerReferences...) to the app's internal ResourceKind, only for the
+// kinds the app knows how to navigate. Ones not listed here are shown as plain text.
 export const K8S_KIND_TO_RESOURCE_KIND: Partial<Record<string, ResourceKind>> = {
   Deployment: 'deployments',
   Service: 'services',

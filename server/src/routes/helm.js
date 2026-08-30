@@ -5,10 +5,10 @@ const { createApis, errorMessage } = require('../k8s');
 
 const router = Router();
 
-// Helm 3 guarda cada revisión de un release como un Secret `owner=helm`. Su
-// campo `release` es JSON serializado + gzip + base64 (codificación propia de Helm);
-// ese resultado se guarda como bytes en el Secret, que a su vez el API de k8s
-// codifica en base64 para el transporte — de ahí el doble base64.
+// Helm 3 stores each revision of a release as a Secret `owner=helm`. Its
+// `release` field is serialized JSON + gzip + base64 (Helm's own encoding);
+// that result is stored as bytes in the Secret, which the k8s API in turn
+// encodes as base64 for transport — hence the double base64.
 function decodeRelease(secret) {
   const raw = secret.data && secret.data.release;
   if (!raw) return null;
@@ -22,8 +22,8 @@ function decodeRelease(secret) {
   }
 }
 
-// El manifest de un release es un documento YAML multi-recurso; solo nos interesa
-// kind/name/namespace de cada recurso para poder enlazarlo desde el frontend.
+// A release's manifest is a multi-resource YAML document; we only care about
+// the kind/name/namespace of each resource so it can be linked from the frontend.
 function parseManifestResources(manifest) {
   if (!manifest) return [];
   let docs;
