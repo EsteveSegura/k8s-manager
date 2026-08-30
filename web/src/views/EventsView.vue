@@ -16,6 +16,7 @@ import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Empty, EmptyHeader, EmptyTitle, EmptyDescription, EmptyMedia } from '@/components/ui/empty'
 import { Separator } from '@/components/ui/separator'
+import { ScrollArea } from '@/components/ui/scroll-area'
 import { InboxIcon, ArrowLeftIcon, XIcon, RefreshCwIcon } from '@lucide/vue'
 
 interface K8sEvent {
@@ -181,7 +182,7 @@ function typeVariant(type: string) {
           <NamespaceFilter />
         </div>
 
-        <div class="min-w-0 flex-1 overflow-auto rounded-lg border">
+        <ScrollArea class="min-w-0 flex-1 rounded-lg border">
           <template v-if="status === 'loading' && events.length === 0">
             <div class="flex flex-col gap-2 p-4">
               <Skeleton class="h-10 w-full" v-for="i in 8" :key="i" />
@@ -238,6 +239,6 @@ function typeVariant(type: string) {
               </TableRow>
             </TableBody>
           </Table>
-        </div>
+        </ScrollArea>
       </div>
 </template>

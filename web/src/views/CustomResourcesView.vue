@@ -158,7 +158,7 @@ function viewRaw(instance: any) {
 
         <ResizablePanelGroup direction="horizontal" class="flex-1 rounded-lg border min-h-0">
           <ResizablePanel :default-size="selectedCrd ? 55 : 100" :min-size="30" class="min-w-0">
-            <div class="h-full min-w-0 overflow-auto">
+            <ScrollArea class="h-full min-w-0">
               <template v-if="crdsStatus === 'loading'">
                 <div class="flex flex-col gap-2 p-4">
                   <Skeleton class="h-10 w-full" v-for="i in 8" :key="i" />
@@ -204,7 +204,7 @@ function viewRaw(instance: any) {
                   </TableRow>
                 </TableBody>
               </Table>
-            </div>
+            </ScrollArea>
           </ResizablePanel>
 
           <template v-if="selectedCrd">

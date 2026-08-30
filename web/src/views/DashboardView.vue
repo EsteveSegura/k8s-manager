@@ -14,6 +14,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { Empty, EmptyHeader, EmptyTitle, EmptyDescription, EmptyMedia } from '@/components/ui/empty'
 import { Separator } from '@/components/ui/separator'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
+import { ScrollArea } from '@/components/ui/scroll-area'
 import { Alert, AlertTitle, AlertDescription, AlertAction } from '@/components/ui/alert'
 import {
   ArrowLeftIcon,
@@ -322,7 +323,7 @@ function goToStat(kind: HealthKind) {
               <CardTitle>{{ $t('dashboard.issuesTitle') }}</CardTitle>
               <CardDescription>{{ $t('dashboard.issuesDescription') }}</CardDescription>
             </CardHeader>
-            <CardContent class="min-h-0 flex-1 overflow-auto">
+            <CardContent class="min-h-0 flex-1 overflow-hidden">
               <Empty v-if="issues.length === 0">
                 <EmptyHeader>
                   <EmptyMedia variant="icon"><CircleCheckIcon /></EmptyMedia>
@@ -331,29 +332,31 @@ function goToStat(kind: HealthKind) {
                 </EmptyHeader>
               </Empty>
 
-              <Table v-else>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>{{ $t('dashboard.columns.kind') }}</TableHead>
-                    <TableHead>{{ $t('dashboard.columns.resource') }}</TableHead>
-                    <TableHead>{{ $t('dashboard.columns.reason') }}</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  <TableRow
-                    v-for="issue in issues"
-                    :key="`${issue.kind}-${issue.namespace}-${issue.name}`"
-                    class="cursor-pointer"
-                    @click="goToIssue(issue)"
-                  >
-                    <TableCell><Badge variant="outline">{{ kindLabels[issue.kind] }}</Badge></TableCell>
-                    <TableCell class="font-medium">
-                      <span v-if="issue.namespace" class="text-muted-foreground">{{ issue.namespace }}/</span>{{ issue.name }}
-                    </TableCell>
-                    <TableCell class="text-muted-foreground text-sm">{{ issue.reason }}</TableCell>
-                  </TableRow>
-                </TableBody>
-              </Table>
+              <ScrollArea v-else class="h-full">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>{{ $t('dashboard.columns.kind') }}</TableHead>
+                      <TableHead>{{ $t('dashboard.columns.resource') }}</TableHead>
+                      <TableHead>{{ $t('dashboard.columns.reason') }}</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    <TableRow
+                      v-for="issue in issues"
+                      :key="`${issue.kind}-${issue.namespace}-${issue.name}`"
+                      class="cursor-pointer"
+                      @click="goToIssue(issue)"
+                    >
+                      <TableCell><Badge variant="outline">{{ kindLabels[issue.kind] }}</Badge></TableCell>
+                      <TableCell class="font-medium">
+                        <span v-if="issue.namespace" class="text-muted-foreground">{{ issue.namespace }}/</span>{{ issue.name }}
+                      </TableCell>
+                      <TableCell class="text-muted-foreground text-sm">{{ issue.reason }}</TableCell>
+                    </TableRow>
+                  </TableBody>
+                </Table>
+              </ScrollArea>
             </CardContent>
           </Card>
         </template>

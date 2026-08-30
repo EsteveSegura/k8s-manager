@@ -15,6 +15,7 @@ import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Empty, EmptyHeader, EmptyTitle, EmptyDescription, EmptyMedia } from '@/components/ui/empty'
 import { Separator } from '@/components/ui/separator'
+import { ScrollArea } from '@/components/ui/scroll-area'
 import { InboxIcon, RefreshCwIcon, XIcon, ArrowLeftIcon, ShieldAlertIcon, ScrollTextIcon, ArrowUpIcon, ArrowDownIcon } from '@lucide/vue'
 import { formatDateTime } from '@/lib/format'
 import { jobStatusLabel, jobStatusVariant } from '@/lib/job-status'
@@ -506,7 +507,7 @@ function pdbHealthyLabel(item: any) {
 
         <ResizablePanelGroup direction="horizontal" class="flex-1 rounded-lg border min-h-0">
           <ResizablePanel :default-size="store.selectedResource ? 60 : 100" :min-size="30" class="min-w-0">
-            <div class="h-full min-w-0 overflow-auto">
+            <ScrollArea class="h-full min-w-0">
               <template v-if="store.resourcesStatus === 'loading'">
                 <div class="flex flex-col gap-2 p-4">
                   <Skeleton class="h-10 w-full" v-for="i in 8" :key="i" />
@@ -761,7 +762,7 @@ function pdbHealthyLabel(item: any) {
                   </TableRow>
                 </TableBody>
               </Table>
-            </div>
+            </ScrollArea>
           </ResizablePanel>
 
           <template v-if="store.selectedResource">
