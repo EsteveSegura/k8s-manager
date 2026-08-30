@@ -6,7 +6,9 @@
   "type": "commonjs",
   "private": true,
   "scripts": {
-    "start": "node index.js",
+    "start:cli": "node index.js",
+    "build": "npm run build --prefix web",
+    "start": "npm run build --prefix web && npm start --prefix server",
     "dev": "concurrently -n server,web -c blue,green \"npm --prefix server run dev\" \"npm --prefix web run dev\"",
     "dev:server": "npm --prefix server run dev",
     "dev:web": "npm --prefix web run dev",

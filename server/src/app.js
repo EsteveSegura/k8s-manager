@@ -1,3 +1,5 @@
+const path = require('path');
+const fs = require('fs');
 const express = require('express');
 const cors = require('cors');
 
@@ -21,6 +23,15 @@ app.use('/api', metricsRouter);
 app.use('/api', crdsRouter);
 app.use('/api', helmRouter);
 app.use('/api', eventsRouter);
+
+// Serves the built web app (npm run build) so `npm start` works as a single process.
+const webDistPath = path.join(__dirname, '..', '..', 'web', 'dist');
+if (fs.existsSync(webDistPath)) {
+  app.use(express.static(webDistPath));
+  app.get(/^\/(?!api).*/, (req, res) => {
+    res.sendFile(path.join(webDistPath, 'index.html'));
+  });
+}
 
 app.use((err, req, res, next) => {
   console.error(err);
