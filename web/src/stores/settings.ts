@@ -9,6 +9,7 @@ const REFRESH_SECONDS_KEY = 'settings.refreshIntervalSeconds'
 const AUTO_REFRESH_KEY = 'settings.autoRefresh'
 const PINNED_KINDS_KEY = 'settings.pinnedKinds'
 const COLLAPSED_SIDEBAR_GROUPS_KEY = 'settings.collapsedSidebarGroups'
+const SIDEBAR_OPEN_KEY = 'settings.sidebarOpen'
 
 function loadRefreshSeconds(): number {
   const stored = Number(localStorage.getItem(REFRESH_SECONDS_KEY))
@@ -40,11 +41,18 @@ function loadCollapsedSidebarGroups(): string[] {
   }
 }
 
+function loadSidebarOpen(): boolean {
+  const stored = localStorage.getItem(SIDEBAR_OPEN_KEY)
+  if (stored === null) return true
+  return stored === 'true'
+}
+
 interface SettingsState {
   refreshIntervalSeconds: number
   autoRefresh: boolean
   pinnedKinds: ResourceKind[]
   collapsedSidebarGroups: string[]
+  sidebarOpen: boolean
 }
 
 export const useSettingsStore = defineStore('settings', {
@@ -53,6 +61,7 @@ export const useSettingsStore = defineStore('settings', {
     autoRefresh: loadAutoRefresh(),
     pinnedKinds: loadPinnedKinds(),
     collapsedSidebarGroups: loadCollapsedSidebarGroups(),
+    sidebarOpen: loadSidebarOpen(),
   }),
 
   getters: {
@@ -87,6 +96,11 @@ export const useSettingsStore = defineStore('settings', {
       else if (!open && idx === -1) this.collapsedSidebarGroups.push(key)
       else return
       localStorage.setItem(COLLAPSED_SIDEBAR_GROUPS_KEY, JSON.stringify(this.collapsedSidebarGroups))
+    },
+
+    setSidebarOpen(open: boolean) {
+      this.sidebarOpen = open
+      localStorage.setItem(SIDEBAR_OPEN_KEY, String(open))
     },
   },
 })
