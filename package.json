@@ -16,7 +16,9 @@
     "dev:demo:server": "npm --prefix server-test run dev",
     "dev:desktop": "concurrently -n server,web,electron -c blue,green,magenta \"npm --prefix server run dev\" \"npm --prefix web run dev\" \"npm --prefix electron run dev\"",
     "pack:desktop": "npm run build && npm --prefix electron run pack",
-    "build:desktop": "npm run build && npm --prefix electron run dist"
+    "build:desktop": "npm run build && npm --prefix electron run dist",
+    "test:e2e": "npm --prefix e2e test",
+    "test:e2e:down": "npm --prefix e2e run cluster:down"
   },
   "devDependencies": {
     "concurrently": "^9.0.1"

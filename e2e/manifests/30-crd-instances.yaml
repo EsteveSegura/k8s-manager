@@ -1,0 +1,7 @@
+apiVersion: e2e.k8s-manager.dev/v1
+kind: Widget
+metadata:
+  name: sample-widget
+  namespace: e2e
+spec:
+  size: 3

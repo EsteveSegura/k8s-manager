@@ -1,0 +1,16 @@
+{
+  "name": "k8s-manager-e2e",
+  "private": true,
+  "description": "End-to-end tests: the real server and UI against a disposable kind cluster",
+  "scripts": {
+    "cluster:up": "bash scripts/cluster-up.sh",
+    "cluster:down": "bash scripts/cluster-down.sh",
+    "test": "npm run cluster:up && playwright test",
+    "test:only": "playwright test",
+    "report": "playwright show-report"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.64.1",
+    "@types/node": "^26.6.5"
+  }
+}
