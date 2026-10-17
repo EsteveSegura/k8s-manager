@@ -36,24 +36,29 @@ The builds are not code-signed yet:
 
 ### Building it locally
 
-Install dependencies (the same as below, plus `npm install --prefix electron`), then from the repo root:
+See [Development](#development) for the full setup. Once dependencies are installed:
 
 ```bash
-npm run dev:desktop     # server + Vite + an Electron window with hot reload
-npm run pack:desktop    # unpacked app in electron/release/ (quickest way to try a production build)
-npm run build:desktop   # installers for the current OS in electron/release/
+npm run pack:desktop    # unpacked app only (quickest way to try a production build)
+npm run build:desktop   # installers (.dmg/.zip on macOS, .exe on Windows, .AppImage/.deb on Linux)
 ```
+
+Everything ends up in `electron/release/`. On macOS both architectures are built, so pick the one matching your machine: `mac-arm64/k8s-manager.app` / `*-mac-arm64.dmg` for Apple Silicon, `mac/k8s-manager.app` / `*-mac-x64.dmg` for Intel. Opening the Intel build on Apple Silicon runs it under Rosetta and makes it very slow.
+
+Open the app from Finder (or with `open electron/release/mac-arm64/k8s-manager.app`) rather than running its binary from a terminal: that way it starts without your shell's `PATH`, just like it will for a user, which is what the app's `PATH` fix for kubeconfig auth plugins has to handle.
 
 ### Publishing a release
 
-The `Desktop release` GitHub Actions workflow builds every platform and publishes a release when a version tag (plain numbers, no `v` prefix) is pushed. The tag must match the `version` in `electron/package.json`:
+The `Desktop release` GitHub Actions workflow (`.github/workflows/release.yml`) builds macOS (arm64 and x64), Windows and Linux, and publishes a GitHub release when a version tag is pushed. Tags are plain version numbers, without a `v` prefix, and must match the `version` in `electron/package.json` (the workflow fails early if they don't):
 
-```bash
-git tag 0.0.1
-git push origin 0.0.1
-```
+1. Bump `version` in `electron/package.json` (e.g. to `0.0.2`), commit and push it to `main`.
+2. Tag that commit and push the tag:
+   ```bash
+   git tag 0.0.2
+   git push origin 0.0.2
+   ```
 
-Running the workflow manually (Actions → Desktop release → Run workflow) only builds the installers and attaches them to the run as artifacts.
+Running the workflow manually (Actions → Desktop release → Run workflow) only builds the installers and attaches them to the run as artifacts, without publishing a release. It's the easiest way to check the Windows and Linux builds from a Mac.
 
 ## Running it
 
@@ -166,6 +171,37 @@ npm run build
   schtasks /create /tn "k8s-manager" /tr "cmd /c cd /d C:\path\to\k8s-manager && npm start --prefix server" /sc onlogon /rl highest
   ```
   To remove it later: `schtasks /delete /tn "k8s-manager" /f`
+
+## Development
+
+The repo has independent parts, each with its own `package.json`, orchestrated from the root with `npm --prefix`:
+
+- `server/` — Express API wrapping `@kubernetes/client-node` (port **47823**, override with `K8S_MANAGER_PORT`).
+- `web/` — Vue 3 UI built with Vite. In dev it runs on **http://localhost:5173** and proxies `/api` to the server.
+- `electron/` — desktop wrapper and packaging config (optional).
+- `server-test/` — fake backend for demos (optional).
+
+Install dependencies once from the repo root (skip the ones you don't need):
+
+```bash
+npm install
+npm install --prefix server
+npm install --prefix web
+npm install --prefix electron      # only for the desktop app
+npm install --prefix server-test   # only for the demo backend
+```
+
+Then, from the repo root:
+
+| Command | What it runs |
+|---|---|
+| `npm run dev` | Server (restarts on change) + Vite with hot reload. Open http://localhost:5173 |
+| `npm run dev:desktop` | Same as `dev`, plus an Electron window pointing at Vite |
+| `npm run dev:demo` | Fake backend + Vite, no kubeconfig needed (see below) |
+| `npm run start` | Production build of the web app served by a single server on :47823 |
+| `npm run pack:desktop` / `npm run build:desktop` | Packaged desktop app / installers in `electron/release/` (see [Building it locally](#building-it-locally)) |
+
+In dev mode Electron is only a window: the server and Vite run as separate processes. The packaged app starts the same Express server itself on a random local port and serves the built UI from it.
 
 ### Trying it without a real cluster
 
