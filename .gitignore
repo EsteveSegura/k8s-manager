@@ -32,3 +32,6 @@ lerna-debug.log*
 .claude/
 CLAUDE.md
 BACKLOG.md
+
+# Electron build output
+electron/release/

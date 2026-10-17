@@ -1,0 +1,115 @@
+{
+  "name": "k8s-manager",
+  "productName": "k8s-manager",
+  "version": "0.0.1",
+  "description": "Read-only observability desktop app for Kubernetes clusters",
+  "author": {
+    "name": "Esteve Segura",
+    "email": "estevesegura.gir@gmail.com"
+  },
+  "homepage": "https://github.com/EsteveSegura/k8s-manager",
+  "license": "ISC",
+  "private": true,
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "dev": "wait-on http://localhost:5173 && electron .",
+    "pack": "electron-builder --dir",
+    "dist": "electron-builder --publish never"
+  },
+  "build": {
+    "appId": "dev.k8smanager.app",
+    "productName": "k8s-manager",
+    "artifactName": "${productName}-${version}-${os}-${arch}.${ext}",
+    "publish": null,
+    "directories": {
+      "output": "release",
+      "buildResources": "build"
+    },
+    "files": [
+      "main.js",
+      "fix-path.js",
+      "package.json"
+    ],
+    "extraResources": [
+      {
+        "from": "../server",
+        "to": "server",
+        "filter": [
+          "**/*",
+          "!**/*.log",
+          "!CLAUDE.md"
+        ]
+      },
+      {
+        "from": "../server/node_modules",
+        "to": "server/node_modules"
+      },
+      {
+        "from": "../web/dist",
+        "to": "web/dist"
+      }
+    ],
+    "mac": {
+      "category": "public.app-category.developer-tools",
+      "identity": "-",
+      "target": [
+        {
+          "target": "dmg",
+          "arch": [
+            "arm64",
+            "x64"
+          ]
+        },
+        {
+          "target": "zip",
+          "arch": [
+            "arm64",
+            "x64"
+          ]
+        }
+      ],
+      "hardenedRuntime": false
+    },
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ]
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true
+    },
+    "linux": {
+      "category": "Development",
+      "target": [
+        {
+          "target": "AppImage",
+          "arch": [
+            "x64"
+          ]
+        },
+        {
+          "target": "deb",
+          "arch": [
+            "x64"
+          ]
+        }
+      ]
+    },
+    "electronLanguages": [
+      "en",
+      "es"
+    ]
+  },
+  "devDependencies": {
+    "electron": "^44.8.0",
+    "electron-builder": "^26.15.3",
+    "wait-on": "^9.5.1"
+  }
+}
