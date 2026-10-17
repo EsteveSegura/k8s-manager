@@ -24,6 +24,37 @@ A read-only observability tool for Kubernetes clusters. It gives you a fast web 
 - Node.js 20+
 - A working kubeconfig with access to the cluster(s) you want to inspect (`~/.kube/config` on macOS/Linux, `%USERPROFILE%\.kube\config` on Windows, or set `KUBECONFIG` to a custom path).
 
+## Desktop app
+
+Prebuilt desktop apps for macOS (Apple Silicon and Intel), Windows and Linux are attached to every [GitHub release](https://github.com/EsteveSegura/k8s-manager/releases). They bundle the UI and the API server, so you only need a working kubeconfig (plus any auth plugins it uses, such as `gke-gcloud-auth-plugin`, on your `PATH`).
+
+The builds are not code-signed yet:
+
+- **macOS**: if it says the app is damaged or can't be opened, run `xattr -cr /Applications/k8s-manager.app` once after installing it.
+- **Windows**: SmartScreen may warn you; click "More info" → "Run anyway".
+- **Linux**: make the AppImage executable (`chmod +x`) or install the `.deb`.
+
+### Building it locally
+
+Install dependencies (the same as below, plus `npm install --prefix electron`), then from the repo root:
+
+```bash
+npm run dev:desktop     # server + Vite + an Electron window with hot reload
+npm run pack:desktop    # unpacked app in electron/release/ (quickest way to try a production build)
+npm run build:desktop   # installers for the current OS in electron/release/
+```
+
+### Publishing a release
+
+The `Desktop release` GitHub Actions workflow builds every platform and publishes a release when a `v*` tag is pushed. The tag must match the `version` in `electron/package.json`:
+
+```bash
+git tag v0.0.1
+git push origin v0.0.1
+```
+
+Running the workflow manually (Actions → Desktop release → Run workflow) only builds the installers and attaches them to the run as artifacts.
+
 ## Running it
 
 Install dependencies once from the repo root:
