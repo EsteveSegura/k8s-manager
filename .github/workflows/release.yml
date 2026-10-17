@@ -1,0 +1,90 @@
+name: Desktop release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  # Manual runs only build the installers and upload them as workflow artifacts.
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    name: Build (${{ matrix.os }})
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-latest, windows-latest, ubuntu-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: |
+            web/package-lock.json
+            server/package-lock.json
+            electron/package-lock.json
+
+      - name: Check tag matches app version
+        if: startsWith(github.ref, 'refs/tags/')
+        shell: bash
+        run: |
+          version="v$(node -p "require('./electron/package.json').version")"
+          if [ "$version" != "$GITHUB_REF_NAME" ]; then
+            echo "::error::Tag $GITHUB_REF_NAME does not match electron/package.json version $version"
+            exit 1
+          fi
+
+      - name: Build web app
+        run: |
+          npm ci --prefix web
+          npm run build --prefix web
+
+      - name: Install server production dependencies
+        run: npm ci --omit=dev --prefix server
+
+      - name: Build installers
+        working-directory: electron
+        run: |
+          npm ci
+          npx electron-builder --publish never
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: k8s-manager-${{ matrix.os }}
+          if-no-files-found: error
+          path: |
+            electron/release/*.dmg
+            electron/release/*.zip
+            electron/release/*.exe
+            electron/release/*.AppImage
+            electron/release/*.deb
+
+  release:
+    name: Publish GitHub release
+    if: startsWith(github.ref, 'refs/tags/')
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v8
+        with:
+          path: dist
+          merge-multiple: true
+
+      - uses: softprops/action-gh-release@v3
+        with:
+          name: k8s-manager ${{ github.ref_name }}
+          generate_release_notes: true
+          files: dist/*
+          body: |
+            Desktop builds for macOS (Apple Silicon and Intel), Windows and Linux.
+
+            These builds are not code-signed yet:
+            - **macOS**: if it says the app is damaged or can't be opened, run `xattr -cr /Applications/k8s-manager.app` once after installing it.
+            - **Windows**: SmartScreen may warn you; click "More info" → "Run anyway".
+            - **Linux**: make the AppImage executable (`chmod +x`) or install the `.deb`.
