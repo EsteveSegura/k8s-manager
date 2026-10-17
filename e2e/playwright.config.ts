@@ -1,7 +1,9 @@
 import path from 'node:path'
 import { defineConfig, devices } from '@playwright/test'
 
-const PORT = 47900
+// Below the OS ephemeral port ranges (Linux 32768+, macOS 49152+), where kind
+// publishes the API server on a random port that could otherwise clash.
+const PORT = Number(process.env.E2E_PORT) || 31900
 const KUBECONFIG = path.join(__dirname, '.kube', 'config')
 
 export default defineConfig({
