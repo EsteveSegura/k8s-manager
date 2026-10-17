@@ -180,6 +180,7 @@ The repo has independent parts, each with its own `package.json`, orchestrated f
 - `web/` — Vue 3 UI built with Vite. In dev it runs on **http://localhost:5173** and proxies `/api` to the server.
 - `electron/` — desktop wrapper and packaging config (optional).
 - `server-test/` — fake backend for demos (optional).
+- `e2e/` — end-to-end tests against a real, disposable Kubernetes cluster (see [Tests](#tests)).
 
 Install dependencies once from the repo root (skip the ones you don't need):
 
@@ -200,6 +201,7 @@ Then, from the repo root:
 | `npm run dev:demo` | Fake backend + Vite, no kubeconfig needed (see below) |
 | `npm run start` | Production build of the web app served by a single server on :47823 |
 | `npm run pack:desktop` / `npm run build:desktop` | Packaged desktop app / installers in `electron/release/` (see [Building it locally](#building-it-locally)) |
+| `npm run test:e2e` / `npm run test:e2e:down` | End-to-end tests against a local kind cluster / delete that cluster (see [Tests](#tests)) |
 
 In dev mode Electron is only a window: the server and Vite run as separate processes. The packaged app starts the same Express server itself on a random local port and serves the built UI from it.
 
@@ -211,3 +213,30 @@ A demo backend (`server-test/`) serves realistic but entirely fake cluster data,
 npm install --prefix server-test
 npm run dev:demo
 ```
+
+### Tests
+
+The end-to-end suite in `e2e/` runs the real server and the built UI against a real Kubernetes cluster created with [kind](https://kind.sigs.k8s.io/), and drives the UI with [Playwright](https://playwright.dev/). Nothing is mocked: it checks that what the app shows matches what is in the cluster.
+
+- `e2e/scripts/cluster-up.sh` creates (or reuses) a single-node kind cluster called `k8s-manager-e2e`, installs metrics-server, applies the fixtures in `e2e/manifests/` (Deployments, a Service, a StatefulSet with a volume, a DaemonSet, Jobs, a CRD, a Helm release from `e2e/chart/`, a deployment that never becomes ready…) and waits until everything has settled. Containers print known, numbered log lines, so log contents can be asserted exactly.
+- The app runs with a kubeconfig for a ServiceAccount that can only `get`/`list`/`watch`. The API server keeps an audit log of that ServiceAccount's requests, and after the tests the suite fails if the app sent any other verb, even one the cluster rejected.
+- Your own `~/.kube/config` is never touched: the cluster's kubeconfigs are written to `e2e/.kube/`.
+
+Requirements: Docker (Docker Desktop, [Colima](https://github.com/abiosoft/colima)…), `kind`, `kubectl` and `helm` on your `PATH`. On macOS: `brew install colima docker kind kubectl helm && colima start --cpu 4 --memory 6`. Windows is only supported through WSL.
+
+```bash
+npm install --prefix e2e
+npx --prefix e2e playwright install chromium   # once
+npm run test:e2e                                # creates/reuses the cluster and runs the suite
+```
+
+The first run creates the cluster (about a minute); later runs reuse it. Other useful commands, from `e2e/`:
+
+```bash
+npm run test:only         # run the tests against the existing cluster, skipping the setup
+npx playwright test --ui  # interactive mode
+npm run report            # open the HTML report of the last run
+npm run cluster:down      # delete the cluster (same as `npm run test:e2e:down` from the root)
+```
+
+In GitHub Actions the `E2E tests` workflow (`.github/workflows/e2e.yml`) runs the same scripts on every pull request and on every push to `main`. When it fails, the Playwright report, with traces, screenshots and videos, is attached to the run as an artifact.
