@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test'
+import { test, expect } from '../support/fixtures'
 import { NAMESPACE, logLines, openDrawer, openList, openResource, waitForDescribePanel } from '../support/app'
 
 // Each web pod's "app" container prints "app line 1".."app line 500" and its

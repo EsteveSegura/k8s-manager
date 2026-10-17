@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Creates (or reuses) the kind cluster for the e2e suite, seeds it with the
 # known fixtures, waits until everything the tests assert on is settled and
-# writes the read-only kubeconfig the app runs with (.kube/config).
+# writes the kubeconfig the app runs with (.kube/config).
 #
 # Nothing here touches ~/.kube/config: kind and kubectl use .kube/admin.config.
 set -euo pipefail
@@ -81,11 +81,15 @@ web_pod_metrics_ready() {
 log "Waiting for metrics-server to report usage"
 wait_for "pod and node metrics" 240 web_pod_metrics_ready
 
-log "Writing read-only kubeconfig to .kube/config"
+log "Writing the app's kubeconfig to .kube/config"
 server="$(kubectl config view --raw --minify -o jsonpath='{.clusters[0].cluster.server}')"
 ca_data="$(kubectl config view --raw --minify -o jsonpath='{.clusters[0].cluster.certificate-authority-data}')"
 token="$(kubectl -n e2e-access create token k8s-manager --duration=24h)"
+limited_token="$(kubectl -n e2e-access create token k8s-manager-limited --duration=24h)"
 umask 077
+# Besides the main read-only context, three contexts to test error handling:
+# partial permissions, a token the API server rejects and an API server that
+# does not answer at all (nothing listens on port 1).
 cat >"$APP_KUBECONFIG" <<EOF
 apiVersion: v1
 kind: Config
@@ -94,15 +98,37 @@ clusters:
     cluster:
       server: $server
       certificate-authority-data: $ca_data
+  - name: unreachable
+    cluster:
+      server: https://127.0.0.1:1
+      insecure-skip-tls-verify: true
 users:
   - name: k8s-manager-read-only
     user:
       token: $token
+  - name: k8s-manager-limited
+    user:
+      token: $limited_token
+  - name: invalid-token
+    user:
+      token: not-a-valid-token
 contexts:
   - name: $CONTEXT_NAME
     context:
       cluster: kind-$CLUSTER_NAME
       user: k8s-manager-read-only
+  - name: $CONTEXT_NAME-limited
+    context:
+      cluster: kind-$CLUSTER_NAME
+      user: k8s-manager-limited
+  - name: $CONTEXT_NAME-invalid-token
+    context:
+      cluster: kind-$CLUSTER_NAME
+      user: invalid-token
+  - name: $CONTEXT_NAME-unreachable
+    context:
+      cluster: unreachable
+      user: invalid-token
 current-context: $CONTEXT_NAME
 EOF
 

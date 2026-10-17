@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test'
+import { test, expect } from '../support/fixtures'
 import { CONTEXT, NAMESPACE, openList, rowWithCell } from '../support/app'
 
 test('helm releases are read from the cluster', async ({ page }) => {
@@ -28,6 +28,8 @@ test('events include the image pull failure of the broken pod', async ({ page })
 test('node usage comes from metrics-server', async ({ page }) => {
   await openList(page, 'nodes')
 
-  // e.g. "123m (4%)" and "812Mi (10%)"
-  await expect(rowWithCell(page, 'k8s-manager-e2e-control-plane')).toContainText(/\d+(\.\d+)?m? \(\d+%\)/)
+  // CPU as "123m (4%)" or "1.08 cores (27%)", memory as "747 MiB (13%)".
+  const row = rowWithCell(page, 'k8s-manager-e2e-control-plane')
+  await expect(row).toContainText(/\d+(\.\d+)?(m| cores?) \(\d+%\)/)
+  await expect(row).toContainText(/\d+(\.\d+)? (Ki|Mi|Gi)B \(\d+%\)/)
 })

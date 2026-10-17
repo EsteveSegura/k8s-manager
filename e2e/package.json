@@ -7,10 +7,12 @@
     "cluster:down": "bash scripts/cluster-down.sh",
     "test": "npm run cluster:up && playwright test",
     "test:only": "playwright test",
-    "report": "playwright show-report"
+    "report": "playwright show-report",
+    "test:coverage": "E2E_COVERAGE=1 playwright test"
   },
   "devDependencies": {
     "@playwright/test": "^1.64.1",
-    "@types/node": "^26.6.5"
+    "@types/node": "^26.6.5",
+    "monocart-coverage-reports": "^2.13.2"
   }
 }

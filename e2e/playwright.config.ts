@@ -30,7 +30,8 @@ export default defineConfig({
   projects: [{ name: 'chromium', use: { ...devices['Desktop Chrome'], viewport: { width: 1600, height: 1000 } } }],
   webServer: {
     // Same production setup as `npm start`: the built UI served by the real server.
-    command: 'npm run build --prefix ../web && node ../server/src/index.js',
+    // With coverage on, the build also emits source maps to map it back to web/src.
+    command: `npm run build --prefix ../web${process.env.E2E_COVERAGE === '1' ? ' -- --sourcemap' : ''} && node ../server/src/index.js`,
     url: `http://127.0.0.1:${PORT}/api/contexts`,
     reuseExistingServer: false,
     timeout: 180_000,
