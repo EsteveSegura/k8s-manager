@@ -201,6 +201,7 @@ Then, from the repo root:
 | `npm run dev:demo` | Fake backend + Vite, no kubeconfig needed (see below) |
 | `npm run start` | Production build of the web app served by a single server on :47823 |
 | `npm run pack:desktop` / `npm run build:desktop` | Packaged desktop app / installers in `electron/release/` (see [Building it locally](#building-it-locally)) |
+| `npm run test:unit` | Unit tests of `web/` and `server/` (see [Tests](#tests)) |
 | `npm run test:e2e` / `npm run test:e2e:down` | End-to-end tests against a local kind cluster / delete that cluster (see [Tests](#tests)) |
 
 In dev mode Electron is only a window: the server and Vite run as separate processes. The packaged app starts the same Express server itself on a random local port and serves the built UI from it.
@@ -216,10 +217,33 @@ npm run dev:demo
 
 ### Tests
 
+There are three kinds of tests. All of them run in GitHub Actions on every pull request and on every push to `main`.
+
+| | What it checks | Where | Run it |
+|---|---|---|---|
+| Unit | Pure logic: Kubernetes quantities, label selectors and resource relations, health rules, YAML, log search, stores (web); routes, Secret redaction, Helm decoding, error mapping (server) | `web/src/**/*.spec.ts`, `server/test/` | `npm test` in `web/` or `server/` |
+| Mutation | That the unit tests actually catch bugs: [Stryker](https://stryker-mutator.io/) changes the code (flips conditions, removes calls…) and checks that some test fails for each change | `stryker.config.json` in `web/` and `server/` | `npm run test:mutation` in `web/` or `server/` |
+| End-to-end | The real server and built UI against a real Kubernetes cluster | `e2e/` | `npm run test:e2e` from the root |
+
+From the repo root, `npm run test:unit` runs the unit tests of both parts.
+
+#### Unit and mutation tests
+
+[Vitest](https://vitest.dev/) runs the unit tests; `npm run test:coverage` writes a coverage report to `coverage/`. The server's tests mock the Kubernetes client, so no cluster is needed, and they also check that every route only ever calls read methods (`list*`/`read*`/`get*`) on it.
+
+`npm run test:mutation` takes a couple of minutes and writes an HTML report to `reports/mutation/index.html`. It fails if the mutation score drops below the `break` threshold in `stryker.config.json`. Known bugs the tests found but that are not fixed yet are written as `it.fails(...)` tests: they pass while the bug exists and start failing once it is fixed, as a reminder to turn them into normal tests.
+
+Vitest stays on 4.x on purpose: with Vitest 5 the Stryker runner silently stops activating mutants and every mutant "survives".
+
+#### End-to-end tests
+
 The end-to-end suite in `e2e/` runs the real server and the built UI against a real Kubernetes cluster created with [kind](https://kind.sigs.k8s.io/), and drives the UI with [Playwright](https://playwright.dev/). Nothing is mocked: it checks that what the app shows matches what is in the cluster.
 
 - `e2e/scripts/cluster-up.sh` creates (or reuses) a single-node kind cluster called `k8s-manager-e2e`, installs metrics-server, applies the fixtures in `e2e/manifests/` (Deployments, a Service, a StatefulSet with a volume, a DaemonSet, Jobs, a CRD, a Helm release from `e2e/chart/`, a deployment that never becomes ready…) and waits until everything has settled. Containers print known, numbered log lines, so log contents can be asserted exactly.
-- The app runs with a kubeconfig for a ServiceAccount that can only `get`/`list`/`watch`. The API server keeps an audit log of that ServiceAccount's requests, and after the tests the suite fails if the app sent any other verb, even one the cluster rejected.
+- The app runs with a kubeconfig for a ServiceAccount that can only `get`/`list`/`watch`. The API server keeps an audit log of the app's requests, and after the tests the suite fails if the app sent any other verb, even one the cluster rejected.
+- The same kubeconfig has three more contexts to test error handling: one with partial permissions, one with a token the cluster rejects and one whose API server does not answer.
+- Some tests change the cluster while the app is open (create, scale and delete a Deployment, a crash-looping pod, a failing Job, a pod that keeps logging) and expect the UI to catch up through auto-refresh.
+- Every test fails if the browser logs an error, throws an uncaught exception or gets a 4xx/5xx from `/api`, unless the test expects that error.
 - Your own `~/.kube/config` is never touched: the cluster's kubeconfigs are written to `e2e/.kube/`.
 
 Requirements: Docker (Docker Desktop, [Colima](https://github.com/abiosoft/colima)…), `kind`, `kubectl` and `helm` on your `PATH`. On macOS: `brew install colima docker kind kubectl helm && colima start --cpu 4 --memory 6`. Windows is only supported through WSL.
@@ -234,9 +258,14 @@ The first run creates the cluster (about a minute); later runs reuse it. Other u
 
 ```bash
 npm run test:only         # run the tests against the existing cluster, skipping the setup
+npm run test:coverage     # same, also measuring which parts of web/src the tests exercise (report in e2e/coverage/)
 npx playwright test --ui  # interactive mode
 npm run report            # open the HTML report of the last run
 npm run cluster:down      # delete the cluster (same as `npm run test:e2e:down` from the root)
 ```
 
-In GitHub Actions the `E2E tests` workflow (`.github/workflows/e2e.yml`) runs the same scripts on every pull request and on every push to `main`. When it fails, the Playwright report, with traces, screenshots and videos, is attached to the run as an artifact.
+In GitHub Actions:
+- **`Unit tests`** (`.github/workflows/unit-tests.yml`) runs the unit tests with coverage and then the mutation tests for `web/` and `server/`.
+- **`E2E tests`** (`.github/workflows/e2e.yml`) runs the end-to-end suite with frontend coverage.
+
+Coverage and mutation scores are shown in each run's summary. When the end-to-end suite fails, the Playwright report, with traces, screenshots and videos, is attached to the run as an artifact.
