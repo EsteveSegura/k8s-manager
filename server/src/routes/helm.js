@@ -75,3 +75,6 @@ router.get('/:context/helm/releases', async (req, res) => {
 });
 
 module.exports = router;
+// Exposed for unit tests.
+module.exports.decodeRelease = decodeRelease;
+module.exports.parseManifestResources = parseManifestResources;

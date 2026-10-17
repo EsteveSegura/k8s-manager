@@ -1,0 +1,42 @@
+{
+  "$schema": "./node_modules/@stryker-mutator/core/schema/stryker-schema.json",
+  "packageManager": "npm",
+  "testRunner": "vitest",
+  "vitest": {
+    "configFile": "vitest.config.mjs",
+    "related": false
+  },
+  "plugins": [
+    "@stryker-mutator/vitest-runner"
+  ],
+  "mutate": [
+    "src/**/*.js",
+    "!src/index.js"
+  ],
+  "coverageAnalysis": "perTest",
+  "reporters": [
+    "clear-text",
+    "html",
+    "json",
+    "progress"
+  ],
+  "htmlReporter": {
+    "fileName": "reports/mutation/index.html"
+  },
+  "clearTextReporter": {
+    "allowEmojis": false,
+    "allowColor": false
+  },
+  "thresholds": {
+    "high": 95,
+    "low": 90,
+    "break": 95
+  },
+  "tempDirName": ".stryker-tmp",
+  "jsonReporter": {
+    "fileName": "reports/mutation/mutation.json"
+  },
+  "ignorePatterns": [
+    "coverage"
+  ]
+}
