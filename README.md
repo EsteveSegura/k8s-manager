@@ -46,11 +46,11 @@ npm run build:desktop   # installers for the current OS in electron/release/
 
 ### Publishing a release
 
-The `Desktop release` GitHub Actions workflow builds every platform and publishes a release when a `v*` tag is pushed. The tag must match the `version` in `electron/package.json`:
+The `Desktop release` GitHub Actions workflow builds every platform and publishes a release when a version tag (plain numbers, no `v` prefix) is pushed. The tag must match the `version` in `electron/package.json`:
 
 ```bash
-git tag v0.0.1
-git push origin v0.0.1
+git tag 0.0.1
+git push origin 0.0.1
 ```
 
 Running the workflow manually (Actions → Desktop release → Run workflow) only builds the installers and attaches them to the run as artifacts.
