@@ -1,0 +1,84 @@
+name: Unit tests
+
+# Same triggers as the e2e suite: pull requests and main only.
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+concurrency:
+  group: unit-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  unit:
+    name: Unit (${{ matrix.part }})
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        part: [web, server]
+    defaults:
+      run:
+        working-directory: ${{ matrix.part }}
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: ${{ matrix.part }}/package-lock.json
+
+      - run: npm ci
+
+      - name: Run tests with coverage
+        run: npm run test:coverage
+
+      - name: Coverage summary
+        if: always()
+        run: node ../.github/scripts/test-summary.mjs coverage "Unit coverage (${{ matrix.part }})" coverage/coverage-summary.json >> "$GITHUB_STEP_SUMMARY"
+
+  mutation:
+    name: Mutation (${{ matrix.part }})
+    # Only once the plain unit tests pass: a failing test makes every mutant meaningless.
+    needs: unit
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        part: [web, server]
+    defaults:
+      run:
+        working-directory: ${{ matrix.part }}
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: ${{ matrix.part }}/package-lock.json
+
+      - run: npm ci
+
+      # Fails when the score drops below `thresholds.break` in stryker.config.json.
+      - name: Run Stryker
+        run: npm run test:mutation
+
+      - name: Mutation summary
+        if: always()
+        run: node ../.github/scripts/test-summary.mjs mutation "Mutation testing (${{ matrix.part }})" reports/mutation/mutation.json >> "$GITHUB_STEP_SUMMARY"
+
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: mutation-report-${{ matrix.part }}
+          path: ${{ matrix.part }}/reports/mutation/
+          if-no-files-found: ignore
+          retention-days: 14
