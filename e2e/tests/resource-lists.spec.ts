@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test'
+import { test, expect } from '../support/fixtures'
 import { NAMESPACE, openList, rowWithCell } from '../support/app'
 
 // One known fixture per list view (see manifests/10-workloads.yaml), with

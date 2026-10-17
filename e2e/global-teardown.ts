@@ -1,9 +1,12 @@
 import { auditEventsSinceMark, READ_ONLY_VERBS } from './support/audit'
+import { coverageEnabled, coverageReport } from './support/coverage'
 
 // The app must never write to the cluster. The RBAC role already forbids it,
 // but a rejected write could be swallowed by the UI, so this checks every
 // request the app made during the run, allowed or not.
-export default function globalTeardown() {
+export default async function globalTeardown() {
+  if (coverageEnabled) await coverageReport().generate()
+
   const events = auditEventsSinceMark()
   if (events.length === 0) {
     throw new Error('The audit log recorded no requests from the app: the read-only check could not run.')

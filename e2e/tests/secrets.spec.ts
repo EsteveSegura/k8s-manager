@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test'
+import { test, expect } from '../support/fixtures'
 import { CONTEXT, NAMESPACE, openDrawer, openResource } from '../support/app'
 
 // Values stored in the app-secret fixture, in plain text and base64.

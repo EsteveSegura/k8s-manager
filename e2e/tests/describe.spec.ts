@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test'
+import { test, expect } from '../support/fixtures'
 import { CONTEXT, NAMESPACE, openDrawer, openList, openResource, rowWithCell } from '../support/app'
 
 test('clicking a deployment opens its describe panel', async ({ page }) => {

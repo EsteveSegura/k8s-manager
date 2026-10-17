@@ -1,5 +1,6 @@
-# Only requests made by the app (through its read-only ServiceAccount) are
-# logged; everything else (controllers, kubectl from the setup script) is not.
+# Only requests made by the app (through its read-only ServiceAccounts) are
+# logged; everything else (controllers, kubectl from the setup script and the
+# tests themselves) is not.
 apiVersion: audit.k8s.io/v1
 kind: Policy
 omitStages:
@@ -8,4 +9,5 @@ rules:
   - level: Metadata
     users:
       - system:serviceaccount:e2e-access:k8s-manager
+      - system:serviceaccount:e2e-access:k8s-manager-limited
   - level: None

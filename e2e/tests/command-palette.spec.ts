@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test'
+import { test, expect } from '../support/fixtures'
 import { CONTEXT, NAMESPACE } from '../support/app'
 
 test('the command palette jumps to a resource by name', async ({ page }) => {

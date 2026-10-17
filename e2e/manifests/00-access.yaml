@@ -34,3 +34,42 @@ subjects:
   - kind: ServiceAccount
     name: k8s-manager
     namespace: e2e-access
+---
+# A second identity that can only read part of the cluster, to test how the
+# app behaves with partial permissions (no Secrets, ConfigMaps, Nodes, Jobs...).
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: k8s-manager-limited
+  namespace: e2e-access
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: k8s-manager-limited
+rules:
+  - apiGroups: [""]
+    resources: ["pods", "pods/log", "services", "endpoints", "namespaces", "events"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: ["apps"]
+    resources: ["deployments", "replicasets", "statefulsets", "daemonsets"]
+    verbs: ["get", "list", "watch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: k8s-manager-limited
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: k8s-manager-limited
+subjects:
+  - kind: ServiceAccount
+    name: k8s-manager-limited
+    namespace: e2e-access
+---
+# Namespace where tests create and change resources while the app watches.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: e2e-live
