@@ -3,10 +3,19 @@ const { createApis, errorMessage } = require('../k8s');
 
 const router = Router();
 
+// `kubectl apply` stores the whole applied manifest in this annotation, so for a
+// Secret it holds a copy of its values (`data`/`stringData`).
+const LAST_APPLIED_ANNOTATION = 'kubectl.kubernetes.io/last-applied-configuration';
+
 // Secrets must never reach the frontend with their content: only their key
-// names are sent, never `data`/`stringData`.
+// names are sent, never `data`/`stringData` nor the last-applied copy of them.
 function redactSecret(secret) {
   const { data, stringData, ...rest } = secret;
+  const annotations = rest.metadata?.annotations;
+  if (annotations && LAST_APPLIED_ANNOTATION in annotations) {
+    const { [LAST_APPLIED_ANNOTATION]: _lastApplied, ...safeAnnotations } = annotations;
+    rest.metadata = { ...rest.metadata, annotations: safeAnnotations };
+  }
   return { ...rest, dataKeys: Object.keys(data || stringData || {}) };
 }
 
