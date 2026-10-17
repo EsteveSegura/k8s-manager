@@ -1,0 +1,24 @@
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: widgets.e2e.k8s-manager.dev
+spec:
+  group: e2e.k8s-manager.dev
+  scope: Namespaced
+  names:
+    kind: Widget
+    plural: widgets
+    singular: widget
+  versions:
+    - name: v1
+      served: true
+      storage: true
+      schema:
+        openAPIV3Schema:
+          type: object
+          properties:
+            spec:
+              type: object
+              properties:
+                size:
+                  type: integer

@@ -1,0 +1,302 @@
+# Known resources the tests assert against. Containers print a fixed set of
+# numbered log lines on startup and only become Ready once they are written,
+# so log contents are predictable by the time the tests run.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: e2e
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: app-config
+  namespace: e2e
+data:
+  LOG_LEVEL: info
+  FEATURE_FLAGS: search,export
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: app-secret
+  namespace: e2e
+type: Opaque
+stringData:
+  password: e2e-super-secret-value
+  api-token: e2e-super-secret-token
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: web
+  namespace: e2e
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: web
+  template:
+    metadata:
+      labels:
+        app: web
+    spec:
+      terminationGracePeriodSeconds: 1
+      containers:
+        - name: app
+          image: busybox:1.37
+          command:
+            - sh
+            - -c
+            - for i in $(seq 1 500); do echo "app line $i"; done; touch /tmp/ready; exec sleep 2147483647
+          env:
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: app-secret
+                  key: password
+          envFrom:
+            - configMapRef:
+                name: app-config
+          readinessProbe:
+            exec:
+              command: [test, -f, /tmp/ready]
+            periodSeconds: 1
+          resources:
+            requests:
+              cpu: 10m
+              memory: 16Mi
+        - name: sidecar
+          image: busybox:1.37
+          command:
+            - sh
+            - -c
+            - for i in $(seq 1 50); do echo "sidecar line $i"; done; touch /tmp/ready; exec sleep 2147483647
+          readinessProbe:
+            exec:
+              command: [test, -f, /tmp/ready]
+            periodSeconds: 1
+          resources:
+            requests:
+              cpu: 10m
+              memory: 16Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: web
+  namespace: e2e
+spec:
+  selector:
+    app: web
+  ports:
+    - name: http
+      port: 80
+      targetPort: 8080
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: web
+  namespace: e2e
+spec:
+  rules:
+    - host: web.e2e.local
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: web
+                port:
+                  number: 80
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: web
+  namespace: e2e
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: web
+  # min == max: the HPA must never rescale the Deployment while the tests
+  # run (the containers' startup CPU spike would otherwise trigger it).
+  minReplicas: 2
+  maxReplicas: 2
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 80
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: web
+  namespace: e2e
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app: web
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: web-ingress
+  namespace: e2e
+spec:
+  podSelector:
+    matchLabels:
+      app: web
+  policyTypes:
+    - Ingress
+  ingress:
+    - ports:
+        - port: 8080
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: db
+  namespace: e2e
+spec:
+  clusterIP: None
+  selector:
+    app: db
+  ports:
+    - port: 5432
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: db
+  namespace: e2e
+spec:
+  serviceName: db
+  replicas: 1
+  selector:
+    matchLabels:
+      app: db
+  template:
+    metadata:
+      labels:
+        app: db
+    spec:
+      terminationGracePeriodSeconds: 1
+      containers:
+        - name: db
+          image: busybox:1.37
+          command: [sh, -c, 'echo "db started"; exec sleep 2147483647']
+          volumeMounts:
+            - name: data
+              mountPath: /data
+  volumeClaimTemplates:
+    - metadata:
+        name: data
+      spec:
+        accessModes: [ReadWriteOnce]
+        resources:
+          requests:
+            storage: 1Gi
+---
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: agent
+  namespace: e2e
+spec:
+  selector:
+    matchLabels:
+      app: agent
+  template:
+    metadata:
+      labels:
+        app: agent
+    spec:
+      terminationGracePeriodSeconds: 1
+      containers:
+        - name: agent
+          image: busybox:1.37
+          command: [sh, -c, 'echo "agent started"; exec sleep 2147483647']
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: migrate
+  namespace: e2e
+spec:
+  backoffLimit: 0
+  template:
+    spec:
+      restartPolicy: Never
+      containers:
+        - name: migrate
+          image: busybox:1.37
+          command: [sh, -c, 'echo "migration done"']
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: report
+  namespace: e2e
+spec:
+  # Once a year: it exists to be listed, not to run during the tests.
+  schedule: "0 3 1 1 *"
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          restartPolicy: Never
+          containers:
+            - name: report
+              image: busybox:1.37
+              command: [sh, -c, 'echo "report"']
+---
+# Never becomes ready (the image does not exist), so the dashboard has a
+# known issue to report.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: broken
+  namespace: e2e
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: broken
+  template:
+    metadata:
+      labels:
+        app: broken
+    spec:
+      terminationGracePeriodSeconds: 1
+      containers:
+        - name: broken
+          image: registry.invalid/k8s-manager-e2e/does-not-exist:1
+---
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: e2e-quota
+  namespace: e2e
+spec:
+  hard:
+    pods: "50"
+    configmaps: "50"
+---
+apiVersion: v1
+kind: LimitRange
+metadata:
+  name: e2e-limits
+  namespace: e2e
+spec:
+  limits:
+    - type: Container
+      max:
+        cpu: "2"
+        memory: 1Gi
