@@ -37,6 +37,12 @@ function createWindow() {
     minHeight: 600,
     title: 'k8s-manager',
     show: false,
+    // On macOS the native title bar is hidden so the window top matches the app
+    // background; the web UI draws a transparent draggable strip there (.electron-mac in web/src/style.css).
+    ...(process.platform === 'darwin' && {
+      titleBarStyle: 'hidden',
+      trafficLightPosition: { x: 12, y: 8 },
+    }),
     webPreferences: {
       contextIsolation: true,
       nodeIntegration: false,
