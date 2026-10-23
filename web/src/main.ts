@@ -4,5 +4,8 @@ import './style.css'
 import App from './App.vue'
 import router from './router'
 import { i18n } from './i18n'
+import { applyElectronMacClass } from './lib/electron'
+
+applyElectronMacClass()
 
 createApp(App).use(createPinia()).use(router).use(i18n).mount('#app')

@@ -125,3 +125,42 @@
     @apply font-sans;
     }
 }
+
+/* Desktop app on macOS: the native title bar is hidden (electron/main.js). A
+   transparent strip keeps the window draggable, and the sidebar and the main area
+   extend under it so the top of the window shows their own colors. */
+.electron-titlebar {
+  display: none;
+}
+
+.electron-mac {
+  --titlebar-height: 28px;
+}
+
+.electron-mac .electron-titlebar {
+  display: block;
+  position: fixed;
+  inset: 0 0 auto 0;
+  z-index: 100;
+  height: var(--titlebar-height);
+  -webkit-app-region: drag;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+.electron-mac [data-slot='sidebar-inner'],
+.electron-mac [data-slot='sidebar-inset'] {
+  padding-top: var(--titlebar-height);
+}
+
+/* Collapsed (icon) sidebar is narrower than the traffic lights, so they would sit
+   half on the sidebar and half on the main area: fade the sidebar's top into the
+   app background so the whole title bar row reads as one dark strip. */
+.electron-mac [data-slot='sidebar'][data-state='collapsed'] [data-slot='sidebar-inner'] {
+  background-image: linear-gradient(
+    to bottom,
+    var(--background) 0,
+    var(--background) calc(var(--titlebar-height) * 0.8),
+    var(--sidebar) calc(var(--titlebar-height) * 1.8)
+  );
+}
